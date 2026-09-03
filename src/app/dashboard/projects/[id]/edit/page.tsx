@@ -33,7 +33,17 @@ export default function EditLiveEditorPage() {
         const { data, error } = await supabase.from('projects').select('*').eq('id', projectId).single();
         if (error) throw error;
         if (data && data.content) {
-          setFormData(data.content);
+          setFormData({
+            title: data.content.title || "",
+            theme: data.content.theme || "modern",
+            greeting: data.content.greeting || "",
+            groom: data.content.groom || { nickname: "", fullName: "", parents: "", ig: "" },
+            bride: data.content.bride || { nickname: "", fullName: "", parents: "", ig: "" },
+            events: Array.isArray(data.content.events) ? data.content.events : [{ id: '1', type: 'Akad Nikah', date: '', startTime: '', endTime: '', venue: '', address: '', mapsUrl: '' }],
+            gifts: Array.isArray(data.content.gifts) ? data.content.gifts : []
+          });
+        } else if (data) {
+          setFormData(prev => ({...prev, title: data.title}));
         }
       } catch (err) {
         console.error(err);
@@ -84,6 +94,7 @@ export default function EditLiveEditorPage() {
         title: formData.title,
         event_date: formData.events[0]?.date || null,
         slug: slug,
+        is_published: true,
         content: formData
       }).eq('id', projectId);
       
