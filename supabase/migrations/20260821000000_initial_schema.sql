@@ -4,7 +4,7 @@ create extension if not exists "uuid-ossp";
 -- ==========================================
 -- 1. PROFILES TABLE (User / WO / EO)
 -- ==========================================
-create table public.profiles (
+create table if not exists public.profiles (
   id uuid references auth.users(id) on delete cascade not null primary key,
   full_name text not null,
   role text default 'personal' check (role in ('personal', 'pro', 'admin')),
@@ -22,7 +22,7 @@ create policy "Users can update own profile" on profiles for update using (auth.
 -- ==========================================
 -- 2. PROJECTS / EVENTS TABLE
 -- ==========================================
-create table public.projects (
+create table if not exists public.projects (
   id uuid default uuid_generate_v4() primary key,
   user_id uuid references public.profiles(id) on delete cascade not null,
   title text not null, -- e.g., "Pernikahan Budi & Sarah"
@@ -42,7 +42,7 @@ create policy "Public can view published projects" on projects for select using 
 -- ==========================================
 -- 3. GUESTS TABLE
 -- ==========================================
-create table public.guests (
+create table if not exists public.guests (
   id uuid default uuid_generate_v4() primary key,
   project_id uuid references public.projects(id) on delete cascade not null,
   name text not null,
@@ -61,7 +61,7 @@ create policy "Users can manage guests for their projects" on guests for all usi
 -- ==========================================
 -- 4. RSVPS TABLE
 -- ==========================================
-create table public.rsvps (
+create table if not exists public.rsvps (
   id uuid default uuid_generate_v4() primary key,
   guest_id uuid references public.guests(id) on delete cascade not null,
   project_id uuid references public.projects(id) on delete cascade not null,
@@ -82,7 +82,7 @@ create policy "Users can manage RSVPs for their projects" on rsvps for all using
 -- ==========================================
 -- 5. AUDIT LOGS TABLE
 -- ==========================================
-create table public.audit_logs (
+create table if not exists public.audit_logs (
   id uuid default uuid_generate_v4() primary key,
   project_id uuid references public.projects(id) on delete set null,
   action text not null, -- e.g., "GUEST_RSVP", "BLAST_SENT", "PROJECT_CREATED"

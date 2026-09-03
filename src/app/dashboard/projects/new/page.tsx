@@ -26,10 +26,19 @@ export default function LiveEditorPage() {
   const handleSave = async () => {
     setIsLoading(true);
     try {
+      // Dapatkan data user yang sedang login
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) {
+        alert("Silakan login terlebih dahulu untuk menyimpan proyek.");
+        setIsLoading(false);
+        return;
+      }
+
       // Menyimpan data ke tabel 'projects'
-      // Catatan: user_id perlu disesuaikan dengan auth user aktif di sistem login
       const { error } = await supabase.from('projects').insert([
         { 
+          user_id: user.id,
           title: formData.title,
           event_date: formData.date,
           slug: formData.title.toLowerCase().replace(/\s+/g, '-'),
