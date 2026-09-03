@@ -91,7 +91,7 @@ export default function LiveEditorPage() {
       const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
       // Simpan ke DB dengan struktur JSON lengkap
-      const { error } = await supabase.from('projects').insert([
+      const { data, error } = await supabase.from('projects').insert([
         { 
           user_id: user.id,
           title: formData.title,
@@ -100,14 +100,14 @@ export default function LiveEditorPage() {
           is_published: true,
           content: formData // Simpan seluruh state form di JSONB
         }
-      ]);
+      ]).select().single();
       
       if (error) throw error;
       
       setSuccess(true);
       setTimeout(() => {
         setSuccess(false);
-        router.push("/dashboard/projects");
+        router.push(`/dashboard/projects/${data.id}`);
       }, 2000);
     } catch (error: any) {
       console.error("Error saving project:", error);
