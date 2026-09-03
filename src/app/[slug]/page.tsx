@@ -59,7 +59,8 @@ export default function InvitationPage() {
   const { content } = project;
   // Fallbacks if content is empty (for old projects without content JSONB)
     const eventType = content?.eventType || project?.event_type || "wedding";
-  const host = content?.host || { name: "Penyelenggara", description: "", logo: "" };\n  const groom = content?.groom || { nickname: "Pria", fullName: "Mempelai Pria", parents: "-", ig: "-" };
+  const host = content?.host || { name: "Penyelenggara", description: "", logo: "" };
+  const groom = content?.groom || { nickname: "Pria", fullName: "Mempelai Pria", parents: "-", ig: "-" };
   const bride = content?.bride || { nickname: "Wanita", fullName: "Mempelai Wanita", parents: "-", ig: "-" };
   const events = content?.events || [];
   const gifts = content?.gifts || [];
