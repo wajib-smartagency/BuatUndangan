@@ -13,34 +13,140 @@ import {
 } from "lucide-react";
 import { motion } from "framer-motion";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-
-// Dummy Data
-const chartData = [
-  { name: 'Jan', tamu: 400 },
-  { name: 'Feb', tamu: 300 },
-  { name: 'Mar', tamu: 550 },
-  { name: 'Apr', tamu: 200 },
-  { name: 'Mei', tamu: 700 },
-  { name: 'Jun', tamu: 450 },
-];
-
-const recentRSVP = [
-  { id: 1, name: "Andi & Keluarga", status: "Hadir", message: "Selamat ya! Semoga langgeng.", event: "Pernikahan Sarah & Budi", time: "2 jam yang lalu" },
-  { id: 2, name: "Rina Maharani", status: "Tidak Hadir", message: "Maaf banget lagi dinas luar kota.", event: "Pernikahan Sarah & Budi", time: "5 jam yang lalu" },
-  { id: 3, name: "Bapak Supriyadi", status: "Hadir", message: "Insya Allah hadir berdua.", event: "Khitanan Daffa", time: "1 hari yang lalu" },
-  { id: 4, name: "Dimas", status: "Hadir", message: "Pasti datang bro!", event: "Pernikahan Sarah & Budi", time: "1 hari yang lalu" },
-  { id: 5, name: "Tante Linda", status: "Hadir", message: "Selamat menempuh hidup baru.", event: "Pernikahan Sarah & Budi", time: "2 hari yang lalu" },
-];
+import { supabase } from "@/lib/supabase";
 
 export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
+  const [stats, setStats] = useState({ totalTamu: 0, rsvpHadir: 0, ucapan: 0 });
+  const [recentRSVP, setRecentRSVP] = useState<any[]>([]);
+  const [chartData, setChartData] = useState<any[]>([]);
 
-  // Simulate data fetching for skeleton loading
   useEffect(() => {
-    const timer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    return () => clearTimeout(timer);
+    const fetchData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return; // Handled by layout
+
+        // Ambil semua project user
+        const { data: projects } = await supabase
+          .from('projects')
+          .select('id, title')
+          .eq('user_id', user.id);
+
+        const projectIds = projects?.map(p => p.id) || [];
+        
+        if (projectIds.length > 0) {
+          // 1. Total Tamu
+          const { count: totalTamu } = await supabase
+            .from('guests')
+            .select('*', { count: 'exact', head: true })
+            .in('project_id', projectIds);
+
+          // 2. RSVP Hadir
+          const { count: rsvpHadir } = await supabase
+            .from('rsvps')
+            .select('*', { count: 'exact', head: true })
+            .in('project_id', projectIds)
+            .eq('status', 'hadir');
+
+          // 3. Ucapan
+          const { count: ucapan } = await supabase
+            .from('rsvps')
+            .select('*', { count: 'exact', head: true })
+            .in('project_id', projectIds)
+            .not('message', 'is', null);
+
+          setStats({
+            totalTamu: totalTamu || 0,
+            rsvpHadir: rsvpHadir || 0,
+            ucapan: ucapan || 0
+          });
+
+          // 4. Log RSVP Terbaru
+          const { data: rsvps } = await supabase
+            .from('rsvps')
+            .select(`
+              id,
+              status,
+              message,
+              created_at,
+              project_id,
+              guests (name)
+            `)
+            .in('project_id', projectIds)
+            .order('created_at', { ascending: false })
+            .limit(5);
+            
+          if (rsvps) {
+             const formattedRsvps = rsvps.map(r => {
+               const proj = projects?.find(p => p.id === r.project_id);
+               const guestName = Array.isArray(r.guests) ? r.guests[0]?.name : (r.guests as any)?.name;
+               
+               const diffMs = new Date().getTime() - new Date(r.created_at).getTime();
+               const diffHrs = Math.floor(diffMs / (1000 * 60 * 60));
+               const timeStr = diffHrs < 1 ? 'Baru saja' : diffHrs < 24 ? `${diffHrs} jam yang lalu` : `${Math.floor(diffHrs/24)} hari yang lalu`;
+
+               return {
+                 id: r.id,
+                 name: guestName || 'Tamu',
+                 status: r.status === 'hadir' ? 'Hadir' : (r.status === 'ragu' ? 'Ragu' : 'Tidak Hadir'),
+                 message: r.message,
+                 event: proj?.title || 'Proyek',
+                 time: timeStr
+               };
+             });
+             setRecentRSVP(formattedRsvps);
+          }
+
+          // 5. Chart Data (6 Bulan Terakhir)
+          const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+          const currMonth = new Date().getMonth();
+          const chartArr = [];
+          for (let i = 5; i >= 0; i--) {
+            let m = currMonth - i;
+            if (m < 0) m += 12;
+            chartArr.push({ name: monthNames[m], tamu: 0 });
+          }
+          
+          const sixMonthsAgo = new Date();
+          sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+          const { data: allHadir } = await supabase
+            .from('rsvps')
+            .select('created_at')
+            .in('project_id', projectIds)
+            .eq('status', 'hadir')
+            .gte('created_at', sixMonthsAgo.toISOString());
+            
+          if (allHadir) {
+             allHadir.forEach(r => {
+               const date = new Date(r.created_at);
+               const mName = monthNames[date.getMonth()];
+               const chartItem = chartArr.find(c => c.name === mName);
+               if (chartItem) chartItem.tamu += 1;
+             });
+          }
+          setChartData(chartArr);
+        } else {
+           // Default Empty State
+           const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
+           const currMonth = new Date().getMonth();
+           const chartArr = [];
+           for (let i = 5; i >= 0; i--) {
+             let m = currMonth - i;
+             if (m < 0) m += 12;
+             chartArr.push({ name: monthNames[m], tamu: 0 });
+           }
+           setChartData(chartArr);
+        }
+      } catch (error) {
+        console.error("Failed to fetch dashboard data", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchData();
   }, []);
 
   if (isLoading) {
@@ -87,11 +193,11 @@ export default function DashboardPage() {
               <Users className="w-6 h-6" />
             </div>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> +12%
+              Real-time
             </span>
           </div>
           <h3 className="text-slate-500 text-sm font-medium mb-1">Total Tamu (Semua Proyek)</h3>
-          <p className="text-3xl font-bold text-slate-900">2,650</p>
+          <p className="text-3xl font-bold text-slate-900">{stats.totalTamu}</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -100,11 +206,11 @@ export default function DashboardPage() {
               <CheckCircle2 className="w-6 h-6" />
             </div>
             <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Aktif
+              Aktif
             </span>
           </div>
           <h3 className="text-slate-500 text-sm font-medium mb-1">RSVP Hadir</h3>
-          <p className="text-3xl font-bold text-slate-900">1,820</p>
+          <p className="text-3xl font-bold text-slate-900">{stats.rsvpHadir}</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -114,7 +220,7 @@ export default function DashboardPage() {
             </div>
           </div>
           <h3 className="text-slate-500 text-sm font-medium mb-1">Ucapan & Doa Masuk</h3>
-          <p className="text-3xl font-bold text-slate-900">945</p>
+          <p className="text-3xl font-bold text-slate-900">{stats.ucapan}</p>
         </motion.div>
 
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.4 }} className="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm hover:shadow-md transition-shadow">
@@ -172,7 +278,7 @@ export default function DashboardPage() {
           </div>
           
           <div className="flex-1 overflow-y-auto pr-2 space-y-4">
-            {recentRSVP.map((rsvp) => (
+            {recentRSVP.length > 0 ? recentRSVP.map((rsvp) => (
               <div key={rsvp.id} className="p-3 bg-slate-50 rounded-xl border border-slate-100 group">
                 <div className="flex items-start justify-between mb-2">
                   <div className="flex items-center gap-2">
@@ -188,7 +294,9 @@ export default function DashboardPage() {
                   </div>
                 )}
               </div>
-            ))}
+            )) : (
+              <div className="text-center text-slate-500 text-sm py-10">Belum ada RSVP masuk.</div>
+            )}
           </div>
 
           <button className="w-full mt-4 flex items-center justify-center gap-2 text-sm font-bold text-indigo-600 bg-indigo-50 py-3 rounded-xl hover:bg-indigo-100 transition-colors">

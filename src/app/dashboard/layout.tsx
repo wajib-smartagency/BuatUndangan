@@ -24,24 +24,29 @@ export default function DashboardLayout({
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<{full_name: string, email: string, role: string} | null>(null);
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true);
   const pathname = usePathname();
 
   React.useEffect(() => {
     const fetchUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-          
-        setUserProfile({
-          full_name: profile?.full_name || "User",
-          email: user.email || "",
-          role: profile?.role || "personal"
-        });
+      if (!user) {
+        window.location.href = "/login";
+        return;
       }
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+          
+      setUserProfile({
+        full_name: profile?.full_name || "User",
+        email: user.email || "",
+        role: profile?.role || "personal"
+      });
+      setIsLoadingAuth(false);
     };
     fetchUser();
   }, []);
@@ -52,10 +57,21 @@ export default function DashboardLayout({
     { name: "Settings", icon: Settings, href: "/dashboard/settings" },
   ];
 
+  const currentNav = navItems.find(item => item.href === pathname) || navItems[0];
+
   const handleLogout = async () => {
     await supabase.auth.signOut();
     window.location.href = "/login";
   };
+
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center">
+        <div className="w-8 h-8 border-4 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin"></div>
+        <p className="mt-4 text-slate-500 font-medium">Memuat Dasbor...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -148,10 +164,10 @@ export default function DashboardLayout({
           </button>
           <div className="flex items-center gap-2 text-indigo-600">
             <MessageSquareHeart className="w-6 h-6" />
-            <span className="font-bold text-lg text-slate-900">invitation-maker</span>
+            <span className="font-bold text-lg text-slate-900">BuatUndangan</span>
           </div>
           <div className="w-8 h-8 rounded-full bg-slate-200 overflow-hidden border border-slate-300">
-             <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" className="w-full h-full" />
+             <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.full_name || 'User'}`} alt="Avatar" className="w-full h-full" />
           </div>
         </header>
 
@@ -160,7 +176,7 @@ export default function DashboardLayout({
            <div className="flex items-center gap-2 text-sm text-slate-500 font-medium">
              <Home className="w-4 h-4" />
              <ChevronRight className="w-4 h-4" />
-             <span className="text-slate-900">Beranda</span>
+             <span className="text-slate-900">{currentNav.name}</span>
            </div>
            <div className="flex items-center gap-4">
              <button className="w-10 h-10 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-colors relative">

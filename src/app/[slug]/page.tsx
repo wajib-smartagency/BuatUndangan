@@ -75,10 +75,11 @@ export default function InvitationPage() {
     setIsSubmitting(true);
     try {
       // 1. Buat data tamu (Guest) terlebih dahulu
+      const uniqueToken = Math.random().toString(36).substring(2, 10);
       const { data: guestData, error: guestError } = await supabase
         .from('guests')
         .insert([
-          { project_id: project.id, name: rsvpForm.name }
+          { project_id: project.id, name: rsvpForm.name, unique_token: uniqueToken }
         ])
         .select()
         .single();

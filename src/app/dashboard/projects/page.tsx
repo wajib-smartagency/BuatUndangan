@@ -96,20 +96,39 @@ export default function ProjectsPage() {
                 <span>{new Date(project.event_date).toLocaleDateString("id-ID")}</span>
               </div>
               
-              <div className="pt-4 border-t border-slate-100 flex items-center gap-2">
-                <Link 
-                  href={`/${project.slug}`} 
-                  target="_blank"
-                  className="flex-1 flex justify-center items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 py-2 rounded-lg text-sm font-medium transition-colors"
-                >
-                  <LinkIcon className="w-4 h-4" /> Buka Web
-                </Link>
-                <Link 
-                  href={`/dashboard/projects/new`} // Di masa depan bisa diarahkan ke halaman edit: /dashboard/projects/${project.id}/edit
-                  className="flex-1 flex justify-center items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm font-bold transition-colors"
-                >
-                  Edit
-                </Link>
+              <div className="pt-4 border-t border-slate-100 flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href={`/${project.slug}`} 
+                    target="_blank"
+                    className="flex-1 flex justify-center items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-200"
+                  >
+                    <LinkIcon className="w-4 h-4" /> Buka Web
+                  </Link>
+                  <button
+                    onClick={() => {
+                      navigator.clipboard.writeText(`${window.location.origin}/${project.slug}`);
+                      alert('Link undangan disalin!');
+                    }}
+                    className="flex-1 flex justify-center items-center gap-2 bg-slate-50 hover:bg-slate-100 text-slate-700 py-2 rounded-lg text-sm font-medium transition-colors border border-slate-200"
+                  >
+                    Copy Link
+                  </button>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Link 
+                    href={`/dashboard/projects/${project.id}`} 
+                    className="flex-1 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg text-sm font-bold transition-colors shadow-sm"
+                  >
+                    Manajemen Tamu
+                  </Link>
+                  <Link 
+                    href={`/dashboard/projects/${project.id}/edit`} 
+                    className="flex-1 flex justify-center items-center gap-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 py-2 rounded-lg text-sm font-bold transition-colors"
+                  >
+                    Edit Desain
+                  </Link>
+                </div>
               </div>
             </div>
           ))}
