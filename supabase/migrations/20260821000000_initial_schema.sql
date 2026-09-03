@@ -31,6 +31,7 @@ create table if not exists public.projects (
   template_id text default 'modern-1',
   slug text unique not null, -- e.g., "budi-sarah-2026" (for URL)
   is_published boolean default false,
+  content jsonb default '{}'::jsonb,
   created_at timestamp with time zone default timezone('Asia/Jakarta'::text, now()) not null
 );
 
