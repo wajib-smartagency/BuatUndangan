@@ -110,7 +110,7 @@ export default function InvitationPage() {
     <div className="min-h-screen bg-slate-900 font-sans text-slate-800 selection:bg-amber-100">
       
       {/* Cover / Welcome Screen */}
-      <div className={\`fixed inset-0 z-50 bg-slate-50 flex flex-col items-center justify-center transition-transform duration-1000 \${isOpened ? '-translate-y-full' : 'translate-y-0'}\`}>
+      <div className={`fixed inset-0 z-50 bg-slate-50 flex flex-col items-center justify-center transition-transform duration-1000 ${isOpened ? '-translate-y-full' : 'translate-y-0'}`}>
          <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50"></div>
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
          
@@ -144,7 +144,7 @@ export default function InvitationPage() {
       </div>
 
       {/* Main Content (Only scrollable after opened) */}
-      <div className={\`max-w-md mx-auto bg-white min-h-screen relative overflow-hidden font-serif \${!isOpened ? 'h-screen overflow-hidden' : ''}\`}>
+      <div className={`max-w-md mx-auto bg-white min-h-screen relative overflow-hidden font-serif ${!isOpened ? 'h-screen overflow-hidden' : ''}`}>
          
          {/* Floating Music Button */}
          {isOpened && (
@@ -152,7 +152,7 @@ export default function InvitationPage() {
              onClick={() => setIsPlaying(!isPlaying)}
              className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
            >
-             <Music className={\`w-5 h-5 \${isPlaying ? 'animate-spin-slow' : ''}\`} />
+             <Music className={`w-5 h-5 ${isPlaying ? 'animate-spin-slow' : ''}`} />
            </button>
          )}
 
@@ -182,7 +182,7 @@ export default function InvitationPage() {
                  </div>
                  <h3 className="font-bold text-2xl text-slate-800 mb-1">{groom.fullName}</h3>
                  <p className="text-xs text-slate-500 font-sans mb-2">{groom.parents}</p>
-                 <a href={\`https://instagram.com/\${groom.ig.replace('@', '')}\`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{groom.ig}</a>
+                 <a href={`https://instagram.com/${groom.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{groom.ig}</a>
                </div>
 
                <div className="text-4xl text-amber-300">♥</div>
@@ -194,7 +194,7 @@ export default function InvitationPage() {
                  </div>
                  <h3 className="font-bold text-2xl text-slate-800 mb-1">{bride.fullName}</h3>
                  <p className="text-xs text-slate-500 font-sans mb-2">{bride.parents}</p>
-                 <a href={\`https://instagram.com/\${bride.ig.replace('@', '')}\`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{bride.ig}</a>
+                 <a href={`https://instagram.com/${bride.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{bride.ig}</a>
                </div>
              </div>
          </div>
@@ -298,14 +298,14 @@ export default function InvitationPage() {
                      <button 
                        type="button"
                        onClick={() => setRsvpForm({...rsvpForm, status: 'Hadir'})}
-                       className={\`p-3 rounded-xl text-sm font-bold border \${rsvpForm.status === 'Hadir' ? 'bg-amber-500 border-amber-500 text-slate-900' : 'bg-transparent border-white/20 text-slate-300'}\`}
+                       className={`p-3 rounded-xl text-sm font-bold border ${rsvpForm.status === 'Hadir' ? 'bg-amber-500 border-amber-500 text-slate-900' : 'bg-transparent border-white/20 text-slate-300'}`}
                      >
                        Hadir
                      </button>
                      <button 
                        type="button"
                        onClick={() => setRsvpForm({...rsvpForm, status: 'Tidak Hadir'})}
-                       className={\`p-3 rounded-xl text-sm font-bold border \${rsvpForm.status === 'Tidak Hadir' ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-white/20 text-slate-300'}\`}
+                       className={`p-3 rounded-xl text-sm font-bold border ${rsvpForm.status === 'Tidak Hadir' ? 'bg-red-500 border-red-500 text-white' : 'bg-transparent border-white/20 text-slate-300'}`}
                      >
                        Tidak Hadir
                      </button>
