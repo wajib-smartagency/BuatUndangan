@@ -101,7 +101,7 @@ export default function DashboardPage() {
           // 5. Chart Data (6 Bulan Terakhir)
           const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
           const currMonth = new Date().getMonth();
-          const chartArr = [];
+          const chartArr: { name: string; tamu: number }[] = [];
           for (let i = 5; i >= 0; i--) {
             let m = currMonth - i;
             if (m < 0) m += 12;
@@ -131,7 +131,7 @@ export default function DashboardPage() {
            // Default Empty State
            const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Ags", "Sep", "Okt", "Nov", "Des"];
            const currMonth = new Date().getMonth();
-           const chartArr = [];
+           const chartArr: { name: string; tamu: number }[] = [];
            for (let i = 5; i >= 0; i--) {
              let m = currMonth - i;
              if (m < 0) m += 12;
