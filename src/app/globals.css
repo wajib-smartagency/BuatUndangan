@@ -12,6 +12,12 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  transition: all 0.3s ease;
+}
+
+body.dark-theme-test {
+  filter: invert(0.9) hue-rotate(180deg);
+  background: #000;
 }
 
 /* Custom Utilities for Premium Look */
