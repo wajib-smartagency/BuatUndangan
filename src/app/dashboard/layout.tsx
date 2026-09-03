@@ -15,6 +15,7 @@ import {
   Bell
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/lib/supabase";
 
 export default function DashboardLayout({
   children,
@@ -22,13 +23,39 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<{full_name: string, email: string, role: string} | null>(null);
   const pathname = usePathname();
+
+  React.useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+          
+        setUserProfile({
+          full_name: profile?.full_name || "User",
+          email: user.email || "",
+          role: profile?.role || "personal"
+        });
+      }
+    };
+    fetchUser();
+  }, []);
 
   const navItems = [
     { name: "Beranda", icon: Home, href: "/dashboard" },
     { name: "Proyek", icon: FolderOpen, href: "/dashboard/projects" },
     { name: "Settings", icon: Settings, href: "/dashboard/settings" },
   ];
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = "/login";
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -54,7 +81,7 @@ export default function DashboardLayout({
         <div className="p-6 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 text-indigo-600">
             <MessageSquareHeart className="w-7 h-7" />
-            <span className="font-bold text-xl tracking-tight text-slate-900">invitation-maker</span>
+            <span className="font-bold text-xl tracking-tight text-slate-900">BuatUndangan</span>
           </Link>
           <button onClick={() => setIsSidebarOpen(false)} className="lg:hidden text-slate-400 hover:text-slate-600">
             <X className="w-6 h-6" />
@@ -93,19 +120,19 @@ export default function DashboardLayout({
         <div className="p-4 border-t border-slate-100 mt-auto">
           <div className="bg-gradient-to-r from-indigo-500 to-violet-500 rounded-xl p-4 text-white mb-4 shadow-lg shadow-indigo-500/20">
             <div className="flex items-center justify-between mb-2">
-              <span className="font-bold text-sm">Paket Pro (EO)</span>
+              <span className="font-bold text-sm">{userProfile?.role === 'pro' ? 'Paket Pro (EO)' : 'Paket Personal'}</span>
               <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-medium">Aktif</span>
             </div>
-            <p className="text-xs text-indigo-100">Unlimited Guests & Workspaces</p>
+            <p className="text-xs text-indigo-100">Buat undangan tanpa batas</p>
           </div>
           
-          <button className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left group">
+          <button onClick={handleLogout} className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-slate-50 transition-colors text-left group">
             <div className="w-10 h-10 rounded-full bg-slate-200 overflow-hidden flex items-center justify-center border border-slate-300 group-hover:border-indigo-400 transition-colors">
-              <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Felix" alt="Avatar" className="w-full h-full" />
+              <img src={`https://api.dicebear.com/7.x/avataaars/svg?seed=${userProfile?.full_name || 'User'}`} alt="Avatar" className="w-full h-full" />
             </div>
             <div className="flex-1 overflow-hidden">
-              <h4 className="text-sm font-bold text-slate-900 truncate">Budi Santoso</h4>
-              <p className="text-xs text-slate-500 truncate">budi@organizer.com</p>
+              <h4 className="text-sm font-bold text-slate-900 truncate">{userProfile?.full_name || 'Loading...'}</h4>
+              <p className="text-xs text-slate-500 truncate">{userProfile?.email || '...'}</p>
             </div>
             <LogOut className="w-5 h-5 text-slate-400 group-hover:text-red-500 transition-colors" />
           </button>
