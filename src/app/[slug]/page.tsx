@@ -58,7 +58,8 @@ export default function InvitationPage() {
 
   const { content } = project;
   // Fallbacks if content is empty (for old projects without content JSONB)
-  const groom = content?.groom || { nickname: "Pria", fullName: "Mempelai Pria", parents: "-", ig: "-" };
+    const eventType = content?.eventType || project?.event_type || "wedding";
+  const host = content?.host || { name: "Penyelenggara", description: "", logo: "" };\n  const groom = content?.groom || { nickname: "Pria", fullName: "Mempelai Pria", parents: "-", ig: "-" };
   const bride = content?.bride || { nickname: "Wanita", fullName: "Mempelai Wanita", parents: "-", ig: "-" };
   const events = content?.events || [];
   const gifts = content?.gifts || [];
@@ -116,15 +117,29 @@ export default function InvitationPage() {
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
          
          <div className="relative z-10 text-center px-6 max-w-md w-full">
-           <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">The Wedding Of</p>
            
-           <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80" alt="Cover" className="w-full h-full object-cover opacity-90" />
-           </div>
-
-           <h1 className="text-5xl font-serif font-bold text-amber-900 leading-none mb-3">
-             {groom.nickname} & {bride.nickname}
-           </h1>
+           {eventType === 'wedding' ? (
+             <>
+               <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">The Wedding Of</p>
+               <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden">
+                 <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80" alt="Cover" className="w-full h-full object-cover opacity-90" />
+               </div>
+               <h1 className="text-5xl font-serif font-bold text-amber-900 leading-none mb-3">
+                 {groom.nickname} & {bride.nickname}
+               </h1>
+             </>
+           ) : (
+             <>
+               <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">You're Invited To</p>
+               <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden flex items-center justify-center text-6xl">
+                 🎉
+               </div>
+               <h1 className="text-5xl font-serif font-bold text-amber-900 leading-tight mb-3">
+                 {project.title}
+               </h1>
+             </>
+           )}
+  
            
            <p className="text-sm text-slate-600 font-medium uppercase tracking-widest bg-white/50 backdrop-blur-sm py-2 rounded-full w-max mx-auto px-6 border border-amber-100 mb-12">
              {events[0] ? new Date(events[0].date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'}) : "Segera"}
@@ -161,10 +176,22 @@ export default function InvitationPage() {
          <div className="relative min-h-[70vh] flex flex-col items-center justify-center text-center p-8 bg-slate-100">
              <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50"></div>
              <div className="relative z-10 w-full">
-                <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-4">The Wedding Of</p>
-                <h2 className="text-5xl font-bold text-amber-900 leading-none mb-2">{groom.nickname}</h2>
-                <h2 className="text-4xl text-amber-700 leading-none mb-2">&</h2>
-                <h2 className="text-5xl font-bold text-amber-900 leading-none mb-8">{bride.nickname}</h2>
+                
+                 {eventType === 'wedding' ? (
+                   <>
+                     <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-4">The Wedding Of</p>
+                     <h2 className="text-5xl font-bold text-amber-900 leading-none mb-2">{groom.nickname}</h2>
+                     <h2 className="text-4xl text-amber-700 leading-none mb-2">&</h2>
+                     <h2 className="text-5xl font-bold text-amber-900 leading-none mb-8">{bride.nickname}</h2>
+                   </>
+                 ) : (
+                   <>
+                     <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-4">You're Invited To</p>
+                     <h2 className="text-5xl font-bold text-amber-900 leading-tight mb-6">{project.title}</h2>
+                     <p className="text-sm font-bold text-slate-700 font-sans mb-8">By: {host.name}</p>
+                   </>
+                 )}
+  
              </div>
          </div>
 
@@ -177,26 +204,37 @@ export default function InvitationPage() {
              
              <div className="space-y-12">
                {/* Groom */}
-               <div>
-                 <div className="w-32 h-32 bg-slate-100 rounded-full mx-auto mb-4 border-4 border-amber-50 shadow-lg overflow-hidden">
-                   <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80" alt="Groom" className="w-full h-full object-cover opacity-80" />
+               
+               {eventType === 'wedding' ? (
+                 <>
+                   <div>
+                     <div className="w-32 h-32 bg-slate-100 rounded-full mx-auto mb-4 border-4 border-amber-50 shadow-lg overflow-hidden">
+                       <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=300&q=80" alt="Groom" className="w-full h-full object-cover opacity-80" />
+                     </div>
+                     <h3 className="font-bold text-2xl text-slate-800 mb-1">{groom.fullName}</h3>
+                     <p className="text-xs text-slate-500 font-sans mb-2">{groom.parents}</p>
+                     <a href={`https://instagram.com/${groom.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{groom.ig}</a>
+                   </div>
+                   <div className="text-4xl text-amber-300">♥</div>
+                   <div>
+                     <div className="w-32 h-32 bg-slate-100 rounded-full mx-auto mb-4 border-4 border-amber-50 shadow-lg overflow-hidden">
+                       <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" alt="Bride" className="w-full h-full object-cover opacity-80" />
+                     </div>
+                     <h3 className="font-bold text-2xl text-slate-800 mb-1">{bride.fullName}</h3>
+                     <p className="text-xs text-slate-500 font-sans mb-2">{bride.parents}</p>
+                     <a href={`https://instagram.com/${bride.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{bride.ig}</a>
+                   </div>
+                 </>
+               ) : (
+                 <div>
+                   <div className="w-32 h-32 bg-slate-100 rounded-full mx-auto mb-4 border-4 border-amber-50 shadow-lg overflow-hidden flex items-center justify-center text-5xl">
+                     🎉
+                   </div>
+                   <h3 className="font-bold text-2xl text-slate-800 mb-1">{host.name}</h3>
+                   <p className="text-sm text-slate-500 font-sans mt-2">{host.description}</p>
                  </div>
-                 <h3 className="font-bold text-2xl text-slate-800 mb-1">{groom.fullName}</h3>
-                 <p className="text-xs text-slate-500 font-sans mb-2">{groom.parents}</p>
-                 <a href={`https://instagram.com/${groom.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{groom.ig}</a>
-               </div>
-
-               <div className="text-4xl text-amber-300">♥</div>
-
-               {/* Bride */}
-               <div>
-                 <div className="w-32 h-32 bg-slate-100 rounded-full mx-auto mb-4 border-4 border-amber-50 shadow-lg overflow-hidden">
-                   <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=300&q=80" alt="Bride" className="w-full h-full object-cover opacity-80" />
-                 </div>
-                 <h3 className="font-bold text-2xl text-slate-800 mb-1">{bride.fullName}</h3>
-                 <p className="text-xs text-slate-500 font-sans mb-2">{bride.parents}</p>
-                 <a href={`https://instagram.com/${bride.ig.replace('@', '')}`} target="_blank" rel="noreferrer" className="text-xs text-indigo-500 font-sans font-medium">{bride.ig}</a>
-               </div>
+               )}
+  
              </div>
          </div>
 
@@ -204,7 +242,7 @@ export default function InvitationPage() {
          <div className="py-16 px-6 bg-amber-50 border-y border-amber-100">
             <div className="text-center mb-10">
               <Calendar className="w-8 h-8 text-amber-600 mx-auto mb-3" />
-              <h3 className="font-bold text-2xl text-amber-900">Jadwal Acara</h3>
+              <h3 className="font-bold text-2xl text-amber-900">{eventType === "wedding" ? "Jadwal Acara Pernikahan" : "Jadwal Acara"}</h3>
             </div>
             
             <div className="space-y-6">
@@ -244,7 +282,7 @@ export default function InvitationPage() {
          {gifts.length > 0 && (
            <div className="py-16 px-6 bg-white text-center">
              <Gift className="w-8 h-8 text-slate-400 mx-auto mb-3" />
-             <h3 className="font-bold text-2xl text-slate-800 mb-3">Kado Digital</h3>
+             <h3 className="font-bold text-2xl text-slate-800 mb-3">{eventType === "wedding" ? "Kado Digital" : "Kirim Hadiah / Dukungan"}</h3>
              <p className="text-sm text-slate-500 font-sans mb-8">Bagi Anda yang ingin memberikan tanda kasih, dapat mengirimkan melalui fitur di bawah ini:</p>
              
              <div className="space-y-4">

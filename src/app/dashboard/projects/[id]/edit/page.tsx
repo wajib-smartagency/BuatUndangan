@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette } from "lucide-react";
+import { ArrowLeft, Save, Users, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter, useParams } from "next/navigation";
 
@@ -18,6 +18,8 @@ export default function EditLiveEditorPage() {
 
   // Form State
   const [formData, setFormData] = useState({
+    eventType: "wedding",
+    host: { name: "", description: "", logo: "" },
     title: "",
     theme: "modern",
     greeting: "",
@@ -33,7 +35,10 @@ export default function EditLiveEditorPage() {
         const { data, error } = await supabase.from('projects').select('*').eq('id', projectId).single();
         if (error) throw error;
         if (data && data.content) {
+          
           setFormData({
+            eventType: data.content.eventType || data.event_type || "wedding",
+            host: data.content.host || { name: "", description: "", logo: "" },
             title: data.content.title || "",
             theme: data.content.theme || "modern",
             greeting: data.content.greeting || "",
@@ -94,6 +99,7 @@ export default function EditLiveEditorPage() {
         title: formData.title,
         event_date: formData.events[0]?.date || null,
         slug: slug,
+        event_type: formData.eventType,
         is_published: true,
         content: formData
       }).eq('id', projectId);
@@ -113,8 +119,13 @@ export default function EditLiveEditorPage() {
     }
   };
 
-  const tabs = [
+  const tabs = formData.eventType === 'wedding' ? [
     { id: "mempelai", label: "Mempelai", icon: Heart },
+    { id: "acara", label: "Acara", icon: Calendar },
+    { id: "hadiah", label: "Hadiah", icon: Gift },
+    { id: "desain", label: "Desain", icon: Palette },
+  ] : [
+    { id: "host", label: "Penyelenggara", icon: Users },
     { id: "acara", label: "Acara", icon: Calendar },
     { id: "hadiah", label: "Hadiah", icon: Gift },
     { id: "desain", label: "Desain", icon: Palette },
@@ -184,7 +195,33 @@ export default function EditLiveEditorPage() {
           {/* Form Content */}
           <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
             
-            {activeTab === "mempelai" && (
+            
+            {activeTab === "host" && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-slate-900 border-b pb-2">Teks Pengantar</h3>
+                  <textarea 
+                    value={formData.greeting} 
+                    onChange={(e) => setFormData({...formData, greeting: e.target.value})}
+                    rows={3} 
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-4 p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                  <h3 className="font-bold text-indigo-900 flex items-center gap-2"><span className="text-xl">🎉</span> Penyelenggara Acara</h3>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Penyelenggara / Host</label>
+                    <input type="text" value={formData.host.name} onChange={e => setFormData({...formData, host: {...formData.host, name: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Deskripsi Singkat</label>
+                    <input type="text" value={formData.host.description} onChange={e => setFormData({...formData, host: {...formData.host, description: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                  </div>
+                </div>
+              </div>
+            )}
+  
+            {activeTab === "mempelai" && formData.eventType === "wedding" && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="space-y-4">
                   <h3 className="font-bold text-slate-900 border-b pb-2">Teks Pengantar</h3>
@@ -351,14 +388,22 @@ export default function EditLiveEditorPage() {
                 <div className="relative min-h-[60%] w-full bg-slate-200 flex flex-col items-center justify-center overflow-hidden pt-8">
                    <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50"></div>
                    <div className="relative z-10 text-center px-4 w-full">
-                     <p className="text-[10px] tracking-widest text-slate-500 uppercase font-sans mb-4">The Wedding Of</p>
-                     <h2 className="text-4xl font-bold text-amber-900 leading-none mb-2">
-                       {formData.groom.nickname}
-                     </h2>
-                     <h2 className="text-3xl text-amber-700 leading-none mb-2">&</h2>
-                     <h2 className="text-4xl font-bold text-amber-900 leading-none mb-6">
-                       {formData.bride.nickname}
-                     </h2>
+                     
+                    {formData.eventType === 'wedding' ? (
+                      <>
+                        <p className="text-[10px] tracking-widest text-slate-500 uppercase font-sans mb-4">The Wedding Of</p>
+                        <h2 className="text-4xl font-bold text-amber-900 leading-none mb-2">{formData.groom.nickname}</h2>
+                        <h2 className="text-3xl text-amber-700 leading-none mb-2">&</h2>
+                        <h2 className="text-4xl font-bold text-amber-900 leading-none mb-6">{formData.bride.nickname}</h2>
+                      </>
+                    ) : (
+                      <>
+                        <p className="text-[10px] tracking-widest text-slate-500 uppercase font-sans mb-4">You're Invited To</p>
+                        <h2 className="text-4xl font-bold text-amber-900 leading-tight mb-6">{formData.title}</h2>
+                        <p className="text-xs font-bold text-slate-700 font-sans mb-4">By: {formData.host.name}</p>
+                      </>
+                    )}
+  
                      {formData.events[0]?.date && (
                        <p className="text-xs text-slate-600 font-sans font-medium uppercase tracking-widest bg-white/50 backdrop-blur-sm py-2 rounded-full w-max mx-auto px-6 border border-amber-100">
                          {new Date(formData.events[0].date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
@@ -375,32 +420,43 @@ export default function EditLiveEditorPage() {
                    
                    <div className="space-y-8">
                      {/* Groom */}
-                     <div>
-                       <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
-                         <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80" alt="Groom" className="w-full h-full object-cover opacity-80" />
+                     
+                     {formData.eventType === 'wedding' ? (
+                       <>
+                         <div>
+                           <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
+                             <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80" alt="Groom" className="w-full h-full object-cover opacity-80" />
+                           </div>
+                           <h3 className="font-bold text-lg text-slate-800">{formData.groom.fullName}</h3>
+                           <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.groom.parents}</p>
+                           <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.groom.ig}</p>
+                         </div>
+                         <div className="text-2xl text-amber-300">♥</div>
+                         <div>
+                           <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
+                             <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80" alt="Bride" className="w-full h-full object-cover opacity-80" />
+                           </div>
+                           <h3 className="font-bold text-lg text-slate-800">{formData.bride.fullName}</h3>
+                           <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.bride.parents}</p>
+                           <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.bride.ig}</p>
+                         </div>
+                       </>
+                     ) : (
+                       <div>
+                         <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden flex items-center justify-center text-4xl">
+                           🎉
+                         </div>
+                         <h3 className="font-bold text-xl text-slate-800">{formData.host.name}</h3>
+                         <p className="text-xs text-slate-500 font-sans mt-2">{formData.host.description}</p>
                        </div>
-                       <h3 className="font-bold text-lg text-slate-800">{formData.groom.fullName}</h3>
-                       <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.groom.parents}</p>
-                       <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.groom.ig}</p>
-                     </div>
-
-                     <div className="text-2xl text-amber-300">♥</div>
-
-                     {/* Bride */}
-                     <div>
-                       <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
-                         <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80" alt="Bride" className="w-full h-full object-cover opacity-80" />
-                       </div>
-                       <h3 className="font-bold text-lg text-slate-800">{formData.bride.fullName}</h3>
-                       <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.bride.parents}</p>
-                       <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.bride.ig}</p>
-                     </div>
+                     )}
+  
                    </div>
                 </div>
 
                 {/* Events Section */}
                 <div className="py-10 px-6 bg-amber-50 border-t border-amber-100">
-                  <h3 className="text-center font-bold text-xl text-amber-900 mb-6">Acara Pernikahan</h3>
+                  <h3 className="text-center font-bold text-xl text-amber-900 mb-6">{formData.eventType === "wedding" ? "Acara Pernikahan" : "Detail Acara"}</h3>
                   <div className="space-y-6">
                     {formData.events.map(ev => (
                       <div key={ev.id} className="bg-white p-5 rounded-2xl border border-amber-200 text-center shadow-sm">
@@ -425,7 +481,7 @@ export default function EditLiveEditorPage() {
 
                 {/* Gift Section */}
                 <div className="py-10 px-6 bg-white border-t border-slate-100 text-center pb-24">
-                  <h3 className="font-bold text-xl text-slate-800 mb-3">Wedding Gift</h3>
+                  <h3 className="font-bold text-xl text-slate-800 mb-3">{formData.eventType === "wedding" ? "Wedding Gift" : "Kirim Hadiah / Dukungan"}</h3>
                   <p className="text-xs text-slate-500 font-sans mb-6">Tanpa mengurangi rasa hormat, bagi Anda yang ingin memberikan tanda kasih dapat melalui:</p>
                   
                   {formData.gifts.map(gf => (
