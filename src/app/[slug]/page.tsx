@@ -54,13 +54,18 @@ function InvitationContent() {
           const { data: guestData } = await supabase
             .from("guests")
             .select("*")
-            .eq("unique_token", guestToken)
             .eq("project_id", projData.id)
-            .single();
+            .or(`unique_token.eq.${guestToken},name.ilike.${guestToken}`)
+            .limit(1)
+            .maybeSingle();
             
           if (guestData) {
             setGuest(guestData);
             setRsvpForm(prev => ({ ...prev, name: guestData.name }));
+          } else {
+            // Jika tamu belum terdaftar di dashboard, tetap tampilkan nama dari URL
+            setGuest({ name: guestToken });
+            setRsvpForm(prev => ({ ...prev, name: guestToken }));
           }
         }
       } catch (err) {
@@ -95,6 +100,9 @@ function InvitationContent() {
   const handleOpen = () => {
     setIsOpened(true);
     setIsPlaying(true);
+    if (audioRef.current) {
+      audioRef.current.play().catch(e => console.log("Audio Blocked:", e));
+    }
   };
 
   const handleRsvpSubmit = async (e: React.FormEvent) => {

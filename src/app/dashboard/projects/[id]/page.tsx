@@ -90,7 +90,8 @@ export default function ProjectManagementPage() {
   };
 
   const handleBlastWa = async (guest: any) => {
-    const link = `${window.location.origin}/${project.slug}?to=${guest.unique_token}`;
+    const guestNameParam = encodeURIComponent(guest.name);
+    const link = `${window.location.origin}/${project.slug}?to=${guestNameParam}`;
     const text = `Kepada Yth. ${guest.name},\n\nTanpa mengurangi rasa hormat, kami bermaksud mengundang Anda untuk menghadiri acara pernikahan kami.\n\nDetail undangan dapat dilihat melalui tautan berikut:\n${link}\n\nMerupakan suatu kehormatan dan kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu.\n\nTerima kasih.`;
     const waUrl = `https://wa.me/?text=${encodeURIComponent(text)}`;
     window.open(waUrl, '_blank');
@@ -231,11 +232,11 @@ export default function ProjectManagementPage() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-slate-500 font-mono text-xs">
-                          {window.location.host}/{project.slug}?to={g.unique_token}
+                          {window.location.host}/{project.slug}?to={encodeURIComponent(g.name)}
                         </td>
                         <td className="px-4 py-3 text-right">
                           <div className="flex items-center justify-end gap-2">
-                             <button onClick={() => copyToClipboard(`${window.location.origin}/${project.slug}?to=${g.unique_token}`)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                             <button onClick={() => copyToClipboard(`${window.location.origin}/${project.slug}?to=${encodeURIComponent(g.name)}`)} className="text-indigo-600 hover:text-indigo-800 bg-indigo-50 hover:bg-indigo-100 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
                                Copy Link
                              </button>
                              <button onClick={() => handleBlastWa(g)} className="text-white bg-emerald-500 hover:bg-emerald-600 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors flex items-center gap-1">
