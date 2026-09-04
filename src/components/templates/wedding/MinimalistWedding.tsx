@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useEffect } from 'react';
 import { WeddingData, RsvpProps } from '@/types/invitation';
 import { CheckCircle2, Calendar, Copy, MessageCircle } from 'lucide-react';
@@ -172,10 +173,12 @@ export default function MinimalistWedding({ data, rsvp, rsvpsList = [] }: Minima
       {/* Gallery Section */}
       {data.galeri && data.galeri.length > 0 && (
         <section className="py-24 bg-white px-4">
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-              {data.galeri.map((img, i) => (
-                <div key={i} className="aspect-square bg-gray-100 overflow-hidden">
-                  <img src={img} alt={`Gallery ${i+1}`} className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" />
+          <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-sm tracking-[0.3em] uppercase text-gray-500 mb-12">Galeri</h2>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+              {data.galeri.map((url, idx) => (
+                <div key={idx} className="aspect-[3/4] overflow-hidden bg-gray-100 group">
+                  <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700" />
                 </div>
               ))}
             </div>
@@ -183,19 +186,22 @@ export default function MinimalistWedding({ data, rsvp, rsvpsList = [] }: Minima
         </section>
       )}
 
-      {/* Digital Envelope */}
+      {/* Gift Section */}
       {data.rekening && data.rekening.length > 0 && (
-        <section className="py-24 px-4 bg-gray-50 text-center">
+        <section className="py-24 px-4 bg-gray-900 text-white text-center">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl tracking-[0.2em] uppercase mb-6">Kado Digital</h2>
-            <p className="text-gray-500 mb-12">Doa restu Anda merupakan karunia yang sangat berarti bagi kami. Namun jika Anda ingin memberikan tanda kasih, kami menyediakan fitur Kado Digital di bawah ini.</p>
+            <h2 className="text-sm tracking-[0.3em] uppercase text-gray-400 mb-8">Kado Pernikahan</h2>
+            <p className="text-gray-400 text-sm mb-12 leading-relaxed">Tanpa mengurangi rasa hormat, bagi Bapak/Ibu/Saudara/i yang ingin memberikan tanda kasih dapat melalui:</p>
             
             <div className="space-y-6">
               {data.rekening.map((rek, i) => (
-                <div key={i} className="bg-white p-8 rounded-lg shadow-sm border border-gray-100 inline-block w-full max-w-sm">
-                  <h3 className="font-semibold text-lg mb-2">{rek.namaBank}</h3>
-                  <p className="text-2xl tracking-widest mb-2 font-mono">{rek.noRekening}</p>
-                  <p className="text-gray-500 uppercase text-sm">a.n {rek.atasNama}</p>
+                <div key={i} className="bg-gray-800 p-8 inline-block w-full max-w-sm">
+                  <h3 className="font-bold text-lg mb-2">{rek.namaBank}</h3>
+                  <p className="text-2xl tracking-widest mb-1 font-light">{rek.noRekening}</p>
+                  <p className="text-gray-400 text-xs uppercase tracking-widest mt-3 mb-6">A.N {rek.atasNama}</p>
+                  <button onClick={() => copyToClipboard(rek.noRekening)} className="flex items-center justify-center gap-2 w-full border border-gray-600 text-gray-300 py-3 tracking-widest uppercase text-xs hover:bg-white hover:text-gray-900 transition-colors">
+                    <Copy className="w-3 h-3" /> Salin Rekening
+                  </button>
                 </div>
               ))}
             </div>
@@ -203,36 +209,62 @@ export default function MinimalistWedding({ data, rsvp, rsvpsList = [] }: Minima
         </section>
       )}
 
-      {/* RSVP & Wishes Section */}
+      {/* RSVP Section */}
       <section className="py-24 px-4 bg-white">
-        <div className="max-w-xl mx-auto">
-          <h2 className="text-3xl tracking-[0.2em] uppercase mb-12 text-center">RSVP & Ucapan</h2>
-          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Nama Anda</label>
-              <input type="text" className="w-full border-b border-gray-300 py-2 bg-transparent focus:outline-none focus:border-gray-800 transition-colors" placeholder="Masukkan nama" />
+        <div className="max-w-md mx-auto text-center">
+          <h2 className="text-sm tracking-[0.3em] uppercase text-gray-500 mb-12">Buku Tamu</h2>
+          
+          {rsvp?.hasSubmitted ? (
+            <div className="bg-gray-50 p-10 text-center mb-12">
+               <CheckCircle2 className="w-12 h-12 text-green-500 mx-auto mb-4" />
+               <h3 className="text-xl mb-2">Terima Kasih</h3>
+               <p className="text-sm text-gray-500">Konfirmasi Anda telah kami terima.</p>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Konfirmasi Kehadiran</label>
-              <select className="w-full border-b border-gray-300 py-2 bg-transparent focus:outline-none focus:border-gray-800 transition-colors">
-                <option value="hadir">Ya, saya akan hadir</option>
-                <option value="tidak">Maaf, saya tidak bisa hadir</option>
-              </select>
+          ) : (
+            <form className="space-y-6 mb-16 text-left" onSubmit={rsvp?.onSubmit || ((e) => e.preventDefault())}>
+              <div>
+                <input required type="text" value={rsvp?.name || ''} onChange={e => rsvp?.onNameChange(e.target.value)} className="w-full border-b border-gray-300 py-3 bg-transparent focus:outline-none focus:border-gray-900 transition-colors text-sm" placeholder="Nama Lengkap" />
+              </div>
+              <div>
+                <select value={rsvp?.status || 'hadir'} onChange={e => rsvp?.onStatusChange(e.target.value)} className="w-full border-b border-gray-300 py-3 bg-transparent focus:outline-none focus:border-gray-900 transition-colors text-sm text-gray-600">
+                  <option value="hadir">Bersedia Hadir</option>
+                  <option value="tidak_hadir">Maaf, Tidak Bisa Hadir</option>
+                </select>
+              </div>
+              <div>
+                <textarea required value={rsvp?.message || ''} onChange={e => rsvp?.onMessageChange(e.target.value)} rows={3} className="w-full border-b border-gray-300 py-3 bg-transparent focus:outline-none focus:border-gray-900 transition-colors text-sm resize-none" placeholder="Pesan & Doa Restu"></textarea>
+              </div>
+              <button disabled={rsvp?.isSubmitting} type="submit" className="w-full bg-gray-900 text-white py-4 tracking-widest uppercase text-xs hover:bg-gray-800 transition-colors mt-4 disabled:opacity-50">
+                {rsvp?.isSubmitting ? 'MENGIRIM...' : 'KIRIM PESAN'}
+              </button>
+            </form>
+          )}
+
+          {/* Guestbook List */}
+          {rsvpsList && rsvpsList.length > 0 && (
+            <div className="bg-gray-50 p-6 h-[400px] overflow-y-auto custom-scrollbar text-left">
+               <div className="space-y-6">
+                 {rsvpsList.map((msg, idx) => (
+                   <div key={idx} className="border-b border-gray-200 pb-4 last:border-0">
+                     <div className="flex justify-between items-start mb-2">
+                       <h4 className="font-semibold text-gray-900 text-sm">{msg.guests?.name || "Tamu"}</h4>
+                       <span className="text-[10px] text-gray-400">{new Date(msg.created_at).toLocaleDateString('id-ID')}</span>
+                     </div>
+                     <span className={`inline-block px-2 py-0.5 text-[10px] uppercase tracking-widest mb-2 ${msg.status === 'hadir' ? 'text-green-600' : 'text-gray-400'}`}>
+                       {msg.status === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                     </span>
+                     <p className="text-gray-600 text-sm">"{msg.message}"</p>
+                   </div>
+                 ))}
+               </div>
             </div>
-            <div>
-              <label className="block text-sm text-gray-500 mb-2">Ucapan & Doa</label>
-              <textarea rows={4} className="w-full border-b border-gray-300 py-2 bg-transparent focus:outline-none focus:border-gray-800 transition-colors" placeholder="Berikan ucapan untuk kedua mempelai"></textarea>
-            </div>
-            <button type="submit" className="w-full bg-gray-800 text-white py-4 tracking-widest uppercase text-sm hover:bg-black transition-colors">
-              Kirim Ucapan
-            </button>
-          </form>
+          )}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-white text-center text-gray-400 text-sm">
-        <p>Created with BuatUndangan</p>
+      <footer className="py-12 bg-gray-50 text-gray-400 text-center text-xs tracking-[0.2em] uppercase">
+        <p>BUATUNDANGAN DIGITAL</p>
       </footer>
     </div>
   );
