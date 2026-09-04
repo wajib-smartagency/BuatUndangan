@@ -24,6 +24,7 @@ export default function LiveEditorPage() {
     eventType: "wedding",
     host: { name: "Penyelenggara", description: "Acara Ulang Tahun", photo: "" },
     title: "Pernikahan Romeo & Juliet",
+    slug: "pernikahan-romeo-juliet",
     theme: "elegant",
     coverImage: "",
     greeting: "Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami.",
@@ -243,7 +244,7 @@ export default function LiveEditorPage() {
         return;
       }
 
-      const slug = formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
+      const slug = formData.slug || formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '');
 
       // Simpan ke DB dengan struktur JSON lengkap
       const { data, error } = await supabase.from('projects').insert([
@@ -351,7 +352,7 @@ export default function LiveEditorPage() {
         { id: "host", icon: Users, label: "Penyelenggara" },
         { id: "acara", icon: Calendar, label: "Acara" },
         { id: "galeri", icon: ImageIcon, label: "Galeri" },
-        { id: "hadiah", icon: Gift, label: "Angpao" },
+        { id: "hadiah", icon: Gift, label: "Kado" },
         { id: "desain", icon: Palette, label: "Desain" },
       ];
 
@@ -367,9 +368,9 @@ export default function LiveEditorPage() {
             <h3 className="text-xl font-bold text-slate-900 mb-2">Pernikahan</h3>
             <p className="text-sm text-slate-500">Undangan resepsi & akad nikah.</p>
           </button>
-          <button onClick={() => { setFormData({...formData, eventType: 'event', title: 'Acara Baru', greeting: 'Kami mengundang Anda untuk hadir dalam acara kami.'}); setActiveTab('host'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
-            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎉</div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Acara Umum</h3>
+          <button onClick={() => { setFormData({...formData, eventType: 'event', title: 'Event Baru', greeting: 'Kami mengundang Anda untuk hadir dalam acara kami.', events: [{ id: '1', type: 'Detail Acara', date: '', startTime: '', endTime: '', venue: '', address: '', mapsUrl: '' }]}); setActiveTab('host'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
+            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎫</div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Event</h3>
             <p className="text-sm text-slate-500">Ulang tahun, seminar, reuni, dll.</p>
           </button>
         </div>
@@ -380,44 +381,53 @@ export default function LiveEditorPage() {
   return (
     <div className="h-[calc(100vh-120px)] flex flex-col -m-4 sm:-m-8">
       {/* Topbar */}
-      <div className="bg-white border-b border-slate-200 px-6 py-4 flex items-center justify-between z-10 shrink-0">
-        <div className="flex items-center gap-4">
+      <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-col sm:flex-row items-center justify-between z-10 shrink-0 gap-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
           <Link href="/dashboard/projects" className="text-slate-400 hover:text-slate-600 transition-colors">
             <ArrowLeft className="w-5 h-5" />
           </Link>
-          <div>
+          <div className="flex flex-col">
             <input 
               type="text" 
               value={formData.title} 
-              onChange={(e) => setFormData({...formData, title: e.target.value})}
-              className="font-bold text-slate-900 leading-tight bg-transparent focus:outline-none focus:ring-0 border-none p-0 h-auto"
+              onChange={e => setFormData({...formData, title: e.target.value})}
+              className="text-lg font-bold text-slate-900 focus:outline-none focus:border-b-2 focus:border-indigo-600 bg-transparent w-full sm:w-64"
+              placeholder="Judul Proyek"
             />
-            <p className="text-xs text-slate-500">url: /{formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}</p>
+            {/* Input Slug URL */}
+            <div className="flex items-center mt-1 text-xs text-slate-500">
+              <span className="text-slate-400">buatundangan.vercel.app/</span>
+              <input 
+                type="text" 
+                value={formData.slug} 
+                onChange={e => setFormData({...formData, slug: e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, '')})}
+                className="font-mono text-indigo-600 bg-transparent focus:outline-none border-b border-transparent focus:border-indigo-300 w-32 md:w-48 ml-1"
+                placeholder={formData.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '')}
+              />
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {success && (
-             <span className="flex items-center gap-1 text-sm font-medium text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg">
-                <CheckCircle2 className="w-4 h-4" /> Tersimpan
-             </span>
-          )}
-          <button 
-            onClick={handleSave}
-            disabled={isLoading}
-            className="flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg text-sm font-bold transition-colors disabled:opacity-70 shadow-sm"
-          >
-            {isLoading ? <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Save className="w-4 h-4" />}
-            Simpan Proyek
-          </button>
-        </div>
+
+        <button onClick={handleSave} disabled={isLoading} className="w-full sm:w-auto bg-indigo-600 text-white px-6 py-2.5 rounded-xl text-sm font-bold shadow-sm hover:bg-indigo-700 hover:shadow-indigo-500/25 transition-all flex items-center justify-center gap-2 disabled:opacity-70">
+          <Save className="w-4 h-4" /> {isLoading ? 'Menyimpan...' : 'Simpan Perubahan'}
+        </button>
       </div>
 
-      <div className="flex-1 flex overflow-hidden">
-        {/* Kiri: Form Editor dengan Tabs */}
-        <div className="w-full lg:w-[45%] xl:w-[40%] bg-white border-r border-slate-200 flex flex-col h-full">
+      {/* Main Layout Workspace */}
+      <div className="flex flex-1 overflow-hidden relative">
+        
+        {success && (
+           <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900 text-white px-6 py-3 rounded-full font-bold shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4">
+             <CheckCircle2 className="text-emerald-400 w-5 h-5" />
+             Undangan Berhasil Dibuat!
+           </div>
+        )}
+
+        {/* Kiri: Form Editor */}
+        <div className="flex-1 max-w-xl bg-white border-r border-slate-200 flex flex-col z-20 shadow-xl">
           
-          {/* Tabs Nav */}
-          <div className="flex border-b border-slate-200 shrink-0 overflow-x-auto no-scrollbar">
+          {/* Tabs Menu Horizontal */}
+          <div className="flex overflow-x-auto border-b border-slate-200 bg-slate-50/50 custom-scrollbar shrink-0">
             {tabs.map(tab => (
               <button
                 key={tab.id}
@@ -449,7 +459,7 @@ export default function LiveEditorPage() {
                   />
                 </div>
                 <div className="space-y-4 p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
-                  <h3 className="font-bold text-indigo-900 flex items-center gap-2"><span className="text-xl">🎉</span> Penyelenggara Acara</h3>
+                  <h3 className="font-bold text-indigo-900 flex items-center gap-2">Penyelenggara Acara</h3>
                   <div>
                     <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Penyelenggara / Host</label>
                     <input type="text" value={formData.host.name} onChange={e => setFormData({...formData, host: {...formData.host, name: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
@@ -487,7 +497,7 @@ export default function LiveEditorPage() {
                       <input type="text" name="nickname" value={formData.groom.nickname} onChange={handleGroomChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Instagram</label>
+                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Username IG</label>
                       <input type="text" name="ig" value={formData.groom.ig} onChange={handleGroomChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
                     </div>
                   </div>
@@ -506,15 +516,15 @@ export default function LiveEditorPage() {
                   </div>
                 </div>
 
-                <div className="space-y-4 p-5 bg-pink-50/50 border border-pink-100 rounded-2xl">
-                  <h3 className="font-bold text-pink-900 flex items-center gap-2"><span className="text-xl">👰</span> Mempelai Wanita</h3>
+                <div className="space-y-4 p-5 bg-rose-50/50 border border-rose-100 rounded-2xl">
+                  <h3 className="font-bold text-rose-900 flex items-center gap-2"><span className="text-xl">👩</span> Mempelai Wanita</h3>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
                       <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Panggilan</label>
                       <input type="text" name="nickname" value={formData.bride.nickname} onChange={handleBrideChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
                     </div>
                     <div>
-                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Instagram</label>
+                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Username IG</label>
                       <input type="text" name="ig" value={formData.bride.ig} onChange={handleBrideChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
                     </div>
                   </div>
@@ -539,10 +549,14 @@ export default function LiveEditorPage() {
               <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 {formData.events.map((ev, idx) => (
                   <div key={ev.id} className="p-5 border border-slate-200 rounded-2xl space-y-4 relative">
-                    <div className="absolute top-0 right-0 bg-slate-100 px-3 py-1 text-xs font-bold rounded-bl-lg rounded-tr-xl text-slate-500">
-                      Acara {idx + 1}
-                    </div>
-                    <h3 className="font-bold text-slate-900 border-b pb-2">{ev.type}</h3>
+                    {formData.eventType === "wedding" && (
+                      <div className="absolute top-0 right-0 bg-slate-100 px-3 py-1 text-xs font-bold rounded-bl-lg rounded-tr-xl text-slate-500">
+                        Acara {idx + 1}
+                      </div>
+                    )}
+                    <h3 className="font-bold text-slate-900 border-b pb-2">
+                      {formData.eventType === "wedding" ? ev.type : "Detail Acara"}
+                    </h3>
                     
                     <div className="grid grid-cols-2 gap-4">
                       <div>

@@ -4,6 +4,7 @@ let content = fs.readFileSync('new_page_copy.txt', 'utf-8');
 
 // Fix the useParams import
 content = content.replace('import { useRouter } from "next/navigation";', 'import { useRouter, useParams } from "next/navigation";');
+content = content.replace('import React, { useState } from "react";', 'import React, { useState, useEffect } from "react";');
 
 // Replace export default function LiveEditorPage()
 content = content.replace('export default function LiveEditorPage() {', 'export default function EditLiveEditorPage() {');
