@@ -185,8 +185,8 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
               <div>
                 <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Kehadiran</label>
                 <select value={rsvp?.status || 'hadir'} onChange={e => rsvp?.onStatusChange(e.target.value)} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans text-[#4A4A4A]">
-                  <option value="Hadir">Bersedia Hadir</option>
-                  <option value="Tidak Hadir">Maaf, Tidak Bisa Hadir</option>
+                  <option value="hadir">Bersedia Hadir</option>
+                  <option value="tidak_hadir">Maaf, Tidak Bisa Hadir</option>
                 </select>
               </div>
               <div>

@@ -19,7 +19,7 @@ function InvitationContent() {
   const audioRef = useRef<HTMLAudioElement>(null);
   
   // RSVP State
-  const [rsvpForm, setRsvpForm] = useState({ name: "", status: "Hadir", message: "" });
+  const [rsvpForm, setRsvpForm] = useState({ name: "", status: "hadir", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
