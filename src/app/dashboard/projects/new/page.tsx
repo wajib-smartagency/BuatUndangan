@@ -5,6 +5,10 @@ import Link from "next/link";
 import { ArrowLeft, Save, Users, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
+import { WeddingData } from "@/types/invitation";
+import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
+import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
+import RusticWedding from "@/components/templates/wedding/RusticWedding";
 
 export default function LiveEditorPage() {
   const router = useRouter();
@@ -60,11 +64,23 @@ export default function LiveEditorPage() {
   });
 
   const handleGroomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, groom: { ...formData.groom, [e.target.name]: e.target.value } });
+    setFormData(prev => {
+      const newGroom = { ...prev.groom, [e.target.name]: e.target.value };
+      const newTitle = prev.eventType === 'wedding' 
+        ? `Pernikahan ${newGroom.nickname || 'Pria'} & ${prev.bride.nickname || 'Wanita'}`
+        : prev.title;
+      return { ...prev, groom: newGroom, title: newTitle };
+    });
   };
 
   const handleBrideChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({ ...formData, bride: { ...formData.bride, [e.target.name]: e.target.value } });
+    setFormData(prev => {
+      const newBride = { ...prev.bride, [e.target.name]: e.target.value };
+      const newTitle = prev.eventType === 'wedding' 
+        ? `Pernikahan ${prev.groom.nickname || 'Pria'} & ${newBride.nickname || 'Wanita'}`
+        : prev.title;
+      return { ...prev, bride: newBride, title: newTitle };
+    });
   };
 
   const handleEventChange = (id: string, field: string, value: string) => {
@@ -119,6 +135,49 @@ export default function LiveEditorPage() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Adapter untuk preview
+  const previewData: WeddingData = {
+    pria: {
+      namaLengkap: formData.groom.fullName || "Mempelai Pria",
+      namaPanggilan: formData.groom.nickname || "Pria",
+      namaBapak: formData.groom.parents.split("&")[0]?.replace("Putra dari Bpk. ", "").trim() || "Bapak",
+      namaIbu: formData.groom.parents.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
+      instagram: formData.groom.ig.replace("@", ""),
+    },
+    wanita: {
+      namaLengkap: formData.bride.fullName || "Mempelai Wanita",
+      namaPanggilan: formData.bride.nickname || "Wanita",
+      namaBapak: formData.bride.parents.split("&")[0]?.replace("Putri dari Bpk. ", "").trim() || "Bapak",
+      namaIbu: formData.bride.parents.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
+      instagram: formData.bride.ig.replace("@", ""),
+    },
+    acaraAkad: {
+      nama: formData.events[0]?.type || "Akad Nikah",
+      tanggal: formData.events[0]?.date || new Date().toISOString(),
+      waktuMulai: formData.events[0]?.startTime || "08:00",
+      waktuSelesai: formData.events[0]?.endTime || "10:00",
+      lokasi: formData.events[0]?.venue || "Lokasi",
+      alamatLengkap: formData.events[0]?.address || "Alamat",
+      linkGoogleMaps: formData.events[0]?.mapsUrl,
+    },
+    acaraResepsi: {
+      nama: formData.events[1]?.type || "Resepsi",
+      tanggal: formData.events[1]?.date || new Date().toISOString(),
+      waktuMulai: formData.events[1]?.startTime || "11:00",
+      waktuSelesai: formData.events[1]?.endTime || "13:00",
+      lokasi: formData.events[1]?.venue || "Lokasi",
+      alamatLengkap: formData.events[1]?.address || "Alamat",
+      linkGoogleMaps: formData.events[1]?.mapsUrl,
+    },
+    kutipan: formData.greeting,
+    rekening: formData.gifts.map(g => ({
+      namaBank: g.bank,
+      noRekening: g.accNumber,
+      atasNama: g.accName
+    })),
+    tema: formData.theme
   };
 
   const tabs = formData.eventType === 'wedding' ? [
@@ -378,14 +437,50 @@ export default function LiveEditorPage() {
             )}
 
             {activeTab === "desain" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 text-center py-12">
-                 <Palette className="w-12 h-12 text-slate-300 mx-auto mb-4" />
-                 <h3 className="text-lg font-bold text-slate-900">Tema Visual</h3>
-                 <p className="text-slate-500 text-sm max-w-xs mx-auto">Fitur pemilihan tema (Floral, Elegan, Minimalis) dan kustomisasi warna akan tersedia di update berikutnya.</p>
-                 <div className="mt-8 flex justify-center gap-4">
-                   <div className="w-16 h-16 rounded-full bg-rose-100 ring-4 ring-rose-500 ring-offset-2"></div>
-                   <div className="w-16 h-16 rounded-full bg-slate-800"></div>
-                   <div className="w-16 h-16 rounded-full bg-emerald-100"></div>
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 py-6">
+                 <div className="text-center mb-8">
+                   <Palette className="w-12 h-12 text-indigo-300 mx-auto mb-4" />
+                   <h3 className="text-xl font-bold text-slate-900">Tema Visual</h3>
+                   <p className="text-slate-500 text-sm">Pilih tema desain undangan untuk acara Anda.</p>
+                 </div>
+                 
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   {/* Elegant */}
+                   <button 
+                     onClick={() => setFormData({...formData, theme: 'elegant'})}
+                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'elegant' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                   >
+                     <div className="w-full h-32 bg-[#FDFBF7] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                        <div className="text-[#2C3E2D] font-serif text-lg leading-tight">Elegant</div>
+                        <div className="w-8 h-px bg-[#B89B5E] my-2"></div>
+                        <div className="text-[10px] text-[#B89B5E] uppercase tracking-widest">Theme</div>
+                     </div>
+                     <h4 className="font-bold text-slate-900">Elegant</h4>
+                   </button>
+                   
+                   {/* Minimalist */}
+                   <button 
+                     onClick={() => setFormData({...formData, theme: 'minimalist'})}
+                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'minimalist' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                   >
+                     <div className="w-full h-32 bg-white border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                        <div className="text-slate-900 font-sans font-light tracking-widest text-lg uppercase">Minimal</div>
+                        <div className="text-xs text-slate-400 mt-1">Design</div>
+                     </div>
+                     <h4 className="font-bold text-slate-900">Minimalist</h4>
+                   </button>
+
+                   {/* Rustic */}
+                   <button 
+                     onClick={() => setFormData({...formData, theme: 'rustic'})}
+                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'rustic' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                   >
+                     <div className="w-full h-32 bg-[#F4F1EA] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                        <div className="text-[#5C4D43] font-serif text-lg italic">Rustic</div>
+                        <div className="text-xs text-[#8C7A6B] mt-1 font-serif">Romance</div>
+                     </div>
+                     <h4 className="font-bold text-slate-900">Rustic</h4>
+                   </button>
                  </div>
               </div>
             )}
@@ -401,113 +496,21 @@ export default function LiveEditorPage() {
              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-slate-900 rounded-b-xl z-20"></div>
              
              {/* Layar Undangan */}
-             <div className="w-full h-full bg-white rounded-[2rem] overflow-y-auto custom-scrollbar relative flex flex-col font-serif">
-                
-                {/* Hero Section */}
-                <div className="relative min-h-[60%] w-full bg-slate-200 flex flex-col items-center justify-center overflow-hidden pt-8">
-                   <div className="absolute inset-0 bg-gradient-to-br from-rose-50 to-orange-50"></div>
-                   <div className="relative z-10 text-center px-4 w-full">
-                     
-                    {formData.eventType === 'wedding' ? (
-                      <>
-                        <p className="text-[10px] tracking-widest text-slate-500 uppercase font-sans mb-4">The Wedding Of</p>
-                        <h2 className="text-4xl font-bold text-amber-900 leading-none mb-2">{formData.groom.nickname}</h2>
-                        <h2 className="text-3xl text-amber-700 leading-none mb-2">&</h2>
-                        <h2 className="text-4xl font-bold text-amber-900 leading-none mb-6">{formData.bride.nickname}</h2>
-                      </>
-                    ) : (
-                      <>
-                        <p className="text-[10px] tracking-widest text-slate-500 uppercase font-sans mb-4">You're Invited To</p>
-                        <h2 className="text-4xl font-bold text-amber-900 leading-tight mb-6">{formData.title}</h2>
-                        <p className="text-xs font-bold text-slate-700 font-sans mb-4">By: {formData.host.name}</p>
-                      </>
-                    )}
-  
-                     <p className="text-xs text-slate-600 font-sans font-medium uppercase tracking-widest bg-white/50 backdrop-blur-sm py-2 rounded-full w-max mx-auto px-6 border border-amber-100">
-                       {new Date(formData.events[0].date).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
-                     </p>
+             <div className="w-full h-full bg-white rounded-[2rem] overflow-y-auto custom-scrollbar relative flex flex-col pointer-events-none origin-top">
+                {formData.eventType === 'wedding' ? (
+                   <div className="scale-[0.8] origin-top w-[125%] h-[125%] relative -left-[12.5%]">
+                     {formData.theme === 'elegant' && <ElegantWedding data={previewData} />}
+                     {formData.theme === 'minimalist' && <MinimalistWedding data={previewData} />}
+                     {formData.theme === 'rustic' && <RusticWedding data={previewData} />}
+                     {!['elegant', 'minimalist', 'rustic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
                    </div>
-                </div>
-
-                {/* Profile Section */}
-                <div className="py-10 px-6 text-center bg-white">
-                   <p className="text-xs text-slate-500 font-sans leading-relaxed mb-8">
-                     {formData.greeting}
-                   </p>
-                   
-                   <div className="space-y-8">
-                     {/* Groom */}
-                     
-                     {formData.eventType === 'wedding' ? (
-                       <>
-                         <div>
-                           <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
-                             <img src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&q=80" alt="Groom" className="w-full h-full object-cover opacity-80" />
-                           </div>
-                           <h3 className="font-bold text-lg text-slate-800">{formData.groom.fullName}</h3>
-                           <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.groom.parents}</p>
-                           <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.groom.ig}</p>
-                         </div>
-                         <div className="text-2xl text-amber-300">♥</div>
-                         <div>
-                           <div className="w-20 h-20 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden">
-                             <img src="https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&q=80" alt="Bride" className="w-full h-full object-cover opacity-80" />
-                           </div>
-                           <h3 className="font-bold text-lg text-slate-800">{formData.bride.fullName}</h3>
-                           <p className="text-[10px] text-slate-500 font-sans mt-1">{formData.bride.parents}</p>
-                           <p className="text-[10px] text-indigo-500 font-sans mt-1">{formData.bride.ig}</p>
-                         </div>
-                       </>
-                     ) : (
-                       <div>
-                         <div className="w-24 h-24 bg-slate-100 rounded-full mx-auto mb-3 border-2 border-amber-200 overflow-hidden flex items-center justify-center text-4xl">
-                           🎉
-                         </div>
-                         <h3 className="font-bold text-xl text-slate-800">{formData.host.name}</h3>
-                         <p className="text-xs text-slate-500 font-sans mt-2">{formData.host.description}</p>
-                       </div>
-                     )}
-  
+                ) : (
+                   <div className="p-8 text-center mt-20 text-slate-500 font-sans">
+                     <div className="text-4xl mb-4">🎉</div>
+                     <h3 className="font-bold text-lg mb-2">Acara Umum</h3>
+                     <p className="text-sm">Preview untuk template Acara Umum belum tersedia saat ini.</p>
                    </div>
-                </div>
-
-                {/* Events Section */}
-                <div className="py-10 px-6 bg-amber-50 border-t border-amber-100">
-                  <h3 className="text-center font-bold text-xl text-amber-900 mb-6">{formData.eventType === "wedding" ? "Acara Pernikahan" : "Detail Acara"}</h3>
-                  <div className="space-y-6">
-                    {formData.events.map(ev => (
-                      <div key={ev.id} className="bg-white p-5 rounded-2xl border border-amber-200 text-center shadow-sm">
-                        <h4 className="font-bold text-amber-800 mb-2">{ev.type}</h4>
-                        <div className="text-xs font-sans text-slate-600 space-y-1 mb-4">
-                          <p className="font-bold">{new Date(ev.date).toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric'})}</p>
-                          <p>{ev.startTime} - {ev.endTime}</p>
-                        </div>
-                        <div className="text-xs font-sans text-slate-500 mb-4">
-                          <p className="font-bold text-slate-700">{ev.venue}</p>
-                          <p>{ev.address}</p>
-                        </div>
-                        <button className="text-[10px] uppercase tracking-wider bg-slate-900 text-white px-4 py-2 rounded-full font-sans font-bold w-full">
-                          Buka Google Maps
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Gift Section */}
-                <div className="py-10 px-6 bg-white border-t border-slate-100 text-center pb-24">
-                  <h3 className="font-bold text-xl text-slate-800 mb-3">{formData.eventType === "wedding" ? "Wedding Gift" : "Kirim Hadiah / Dukungan"}</h3>
-                  <p className="text-xs text-slate-500 font-sans mb-6">Tanpa mengurangi rasa hormat, bagi Anda yang ingin memberikan tanda kasih dapat melalui:</p>
-                  
-                  {formData.gifts.map(gf => (
-                    <div key={gf.id} className="bg-slate-50 p-4 rounded-xl border border-slate-200 mb-3">
-                      <p className="font-bold text-slate-700 text-sm">{gf.bank}</p>
-                      <p className="font-mono text-lg text-slate-900 my-1">{gf.accNumber}</p>
-                      <p className="text-xs text-slate-500 uppercase">{gf.accName}</p>
-                    </div>
-                  ))}
-                </div>
-
+                )}
              </div>
           </div>
 

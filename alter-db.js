@@ -1,6 +1,6 @@
 const { Client } = require('pg');
 
-const connectionString = 'postgresql://postgres.waxfxmutnpcyrembtvbh:BukuUndangan%23123@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres';
+const connectionString = 'postgresql://postgres.waxfxmutnpcyrembtvbh:BuatUndangan%23123@aws-0-ap-northeast-2.pooler.supabase.com:6543/postgres';
 
 async function run() {
   const client = new Client({ connectionString, ssl: { rejectUnauthorized: false } });

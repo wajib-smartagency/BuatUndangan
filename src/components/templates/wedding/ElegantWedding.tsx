@@ -1,11 +1,13 @@
 import React from 'react';
-import { WeddingData } from '@/types/invitation';
+import { WeddingData, RsvpProps } from '@/types/invitation';
+import { CheckCircle2 } from 'lucide-react';
 
 interface ElegantWeddingProps {
   data: WeddingData;
+  rsvp?: RsvpProps;
 }
 
-export default function ElegantWedding({ data }: ElegantWeddingProps) {
+export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#4A4A4A] font-serif">
       {/* Hero Section */}
@@ -158,26 +160,34 @@ export default function ElegantWedding({ data }: ElegantWeddingProps) {
             <div className="w-16 h-[2px] bg-[#B89B5E] mx-auto"></div>
           </div>
           
-          <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
-            <div>
-              <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Nama Lengkap</label>
-              <input type="text" className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans" placeholder="Nama Anda" />
+          {rsvp?.hasSubmitted ? (
+            <div className="bg-white p-12 text-center border border-[#F2EFE9]">
+               <CheckCircle2 className="w-16 h-16 text-[#B89B5E] mx-auto mb-4" />
+               <h3 className="text-2xl text-[#2C3E2D] mb-2">Terima Kasih</h3>
+               <p className="text-[#888]">Pesan dan konfirmasi kehadiran Anda telah kami terima.</p>
             </div>
-            <div>
-              <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Kehadiran</label>
-              <select className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans text-[#4A4A4A]">
-                <option value="hadir">Bersedia Hadir</option>
-                <option value="tidak">Maaf, Tidak Bisa Hadir</option>
-              </select>
-            </div>
-            <div>
-              <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Pesan Untuk Mempelai</label>
-              <textarea rows={4} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans" placeholder="Tulis doa dan harapan Anda..."></textarea>
-            </div>
-            <button type="submit" className="w-full bg-[#2C3E2D] text-[#E8E1D5] py-4 font-sans tracking-[0.1em] uppercase text-sm hover:bg-[#1a251b] transition-colors">
-              Kirim Pesan
-            </button>
-          </form>
+          ) : (
+            <form className="space-y-8" onSubmit={rsvp?.onSubmit || ((e) => e.preventDefault())}>
+              <div>
+                <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Nama Lengkap</label>
+                <input required type="text" value={rsvp?.name || ''} onChange={e => rsvp?.onNameChange(e.target.value)} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans" placeholder="Nama Anda" />
+              </div>
+              <div>
+                <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Kehadiran</label>
+                <select value={rsvp?.status || 'hadir'} onChange={e => rsvp?.onStatusChange(e.target.value)} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans text-[#4A4A4A]">
+                  <option value="Hadir">Bersedia Hadir</option>
+                  <option value="Tidak Hadir">Maaf, Tidak Bisa Hadir</option>
+                </select>
+              </div>
+              <div>
+                <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Pesan Untuk Mempelai</label>
+                <textarea required value={rsvp?.message || ''} onChange={e => rsvp?.onMessageChange(e.target.value)} rows={4} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans" placeholder="Tulis doa dan harapan Anda..."></textarea>
+              </div>
+              <button disabled={rsvp?.isSubmitting} type="submit" className="w-full bg-[#2C3E2D] text-[#E8E1D5] py-4 font-sans tracking-[0.1em] uppercase text-sm hover:bg-[#1a251b] transition-colors disabled:opacity-50">
+                {rsvp?.isSubmitting ? 'MENGIRIM...' : 'KIRIM PESAN'}
+              </button>
+            </form>
+          )}
         </div>
       </section>
 

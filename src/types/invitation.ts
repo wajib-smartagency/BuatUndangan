@@ -23,6 +23,18 @@ export interface Rekening {
   atasNama: string;
 }
 
+export interface RsvpProps {
+  name: string;
+  status: string;
+  message: string;
+  isSubmitting: boolean;
+  hasSubmitted: boolean;
+  onNameChange: (val: string) => void;
+  onStatusChange: (val: string) => void;
+  onMessageChange: (val: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+}
+
 export interface WeddingData {
   pria: Mempelai;
   wanita: Mempelai;

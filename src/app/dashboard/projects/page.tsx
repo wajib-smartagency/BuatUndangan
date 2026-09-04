@@ -2,12 +2,13 @@
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
-import { Plus, FolderOpen, Calendar, MoreVertical, Link as LinkIcon } from "lucide-react";
+import { Plus, FolderOpen, Calendar, Trash2, Link as LinkIcon } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState<string | null>(null);
 
   useEffect(() => {
     fetchProjects();
@@ -31,6 +32,22 @@ export default function ProjectsPage() {
       console.error("Error fetching projects:", err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm("Apakah Anda yakin ingin menghapus proyek ini?")) return;
+    
+    setIsDeleting(id);
+    try {
+      const { error } = await supabase.from('projects').delete().eq('id', id);
+      if (error) throw error;
+      setProjects(projects.filter(p => p.id !== id));
+    } catch (err) {
+      console.error("Error deleting project:", err);
+      alert("Gagal menghapus proyek.");
+    } finally {
+      setIsDeleting(null);
     }
   };
 
@@ -84,8 +101,13 @@ export default function ProjectsPage() {
                 <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <FolderOpen className="w-5 h-5" />
                 </div>
-                <button className="text-slate-400 hover:text-slate-600">
-                  <MoreVertical className="w-5 h-5" />
+                <button 
+                  onClick={() => handleDelete(project.id)}
+                  disabled={isDeleting === project.id}
+                  className="text-slate-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition-colors disabled:opacity-50"
+                  title="Hapus Proyek"
+                >
+                  <Trash2 className="w-5 h-5" />
                 </button>
               </div>
               <h3 className="font-bold text-slate-900 text-lg mb-1 truncate" title={project.title}>
