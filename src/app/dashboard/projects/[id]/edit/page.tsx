@@ -801,44 +801,51 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathNam
                     )}
                  </div>
 
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   {/* Elegant */}
-                   <button 
-                     onClick={() => setFormData({...formData, theme: 'elegant'})}
-                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'elegant' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
-                   >
-                     <div className="w-full h-32 bg-[#FDFBF7] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
-                        <div className="text-[#2C3E2D] font-serif text-lg leading-tight">Elegant</div>
-                        <div className="w-8 h-px bg-[#B89B5E] my-2"></div>
-                        <div className="text-[10px] text-[#B89B5E] uppercase tracking-widest">Theme</div>
-                     </div>
-                     <h4 className="font-bold text-slate-900">Elegant</h4>
-                   </button>
-                   
-                   {/* Minimalist */}
-                   <button 
-                     onClick={() => setFormData({...formData, theme: 'minimalist'})}
-                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'minimalist' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
-                   >
-                     <div className="w-full h-32 bg-white border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
-                        <div className="text-slate-900 font-sans font-light tracking-widest text-lg uppercase">Minimal</div>
-                        <div className="text-xs text-slate-400 mt-1">Design</div>
-                     </div>
-                     <h4 className="font-bold text-slate-900">Minimalist</h4>
-                   </button>
-
-                   {/* Rustic */}
-                   <button 
-                     onClick={() => setFormData({...formData, theme: 'rustic'})}
-                     className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'rustic' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
-                   >
-                     <div className="w-full h-32 bg-[#F4F1EA] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
-                        <div className="text-[#5C4D43] font-serif text-lg italic">Rustic</div>
-                        <div className="text-xs text-[#8C7A6B] mt-1 font-serif">Romance</div>
-                     </div>
-                     <h4 className="font-bold text-slate-900">Rustic</h4>
-                   </button>
-                 </div>
+                 {formData.eventType === 'wedding' ? (
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                     {/* Elegant */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'elegant'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'elegant' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-[#FDFBF7] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-[#2C3E2D] font-serif text-lg leading-tight">Elegant</div>
+                          <div className="w-8 h-px bg-[#B89B5E] my-2"></div>
+                          <div className="text-[10px] text-[#B89B5E] uppercase tracking-widest">Theme</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Elegant</h4>
+                     </button>
+                     
+                     {/* Minimalist */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'minimalist'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'minimalist' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-white border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-slate-900 font-sans font-light tracking-widest text-lg uppercase">Minimal</div>
+                          <div className="text-xs text-slate-400 mt-1">Design</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Minimalist</h4>
+                     </button>
+ 
+                     {/* Rustic */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'rustic'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'rustic' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-[#F4F1EA] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-[#5C4D43] font-serif text-lg italic">Rustic</div>
+                          <div className="text-xs text-[#8C7A6B] mt-1 font-serif">Romance</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Rustic</h4>
+                     </button>
+                   </div>
+                 ) : (
+                   <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl text-center">
+                     <p className="text-indigo-800 font-bold mb-1">Tema Default Diterapkan</p>
+                     <p className="text-sm text-indigo-600">Template spesifik untuk {formData.eventType === 'birthday' ? 'Ulang Tahun' : 'Event Umum'} sudah diterapkan secara otomatis pada undangan Anda.</p>
+                   </div>
+                 )}
               </div>
             )}
 
