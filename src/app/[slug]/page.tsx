@@ -4,11 +4,12 @@ import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Music, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { WeddingData, GeneralEventData, RsvpProps } from "@/types/invitation";
+import { WeddingData, BirthdayData, CorporateEventData, RsvpProps } from "@/types/invitation";
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
-import ElegantEvent from "@/components/templates/general/ElegantEvent";
+import FunBirthday from "@/components/templates/birthday/FunBirthday";
+import ModernEvent from "@/components/templates/general/ModernEvent";
 
 function InvitationContent() {
   const { slug } = useParams();
@@ -165,7 +166,7 @@ function InvitationContent() {
   };
 
   const content = project.content || {};
-  const isWedding = project.event_type === "wedding";
+  const eventType = project.event_type || "wedding";
 
   const weddingData: WeddingData = {
     coverImage: content?.coverImage,
@@ -214,16 +215,16 @@ function InvitationContent() {
     tema: content?.theme || "elegant"
   };
 
-  const generalEventData: GeneralEventData = {
-    coverImage: content?.coverImage,
-    host: {
-      namaLengkap: content?.host?.name || "Nama Penyelenggara",
-      namaPanggilan: content?.host?.name?.split(" ")[0] || "Penyelenggara",
-      deskripsi: content?.host?.description || "Acara Spesial",
-      foto: content?.host?.photo,
+  const birthdayData: BirthdayData = {
+    profil: {
+      namaLengkap: content?.birthday?.fullName || "Nama Lengkap",
+      namaPanggilan: content?.birthday?.nickname || "Panggilan",
+      umur: content?.birthday?.age || "17",
+      foto: content?.birthday?.photo,
+      dresscode: content?.birthday?.dresscode,
     },
     acara: {
-      nama: content?.events?.[0]?.type || "Acara Utama",
+      nama: content?.events?.[0]?.type || "Acara Ulang Tahun",
       tanggal: content?.events?.[0]?.date || new Date().toISOString(),
       waktuMulai: content?.events?.[0]?.startTime || "08:00",
       waktuSelesai: content?.events?.[0]?.endTime || "12:00",
@@ -231,7 +232,7 @@ function InvitationContent() {
       alamatLengkap: content?.events?.[0]?.address || "Alamat",
       linkGoogleMaps: content?.events?.[0]?.mapsUrl,
     },
-    kutipan: content?.greeting || "Selamat datang di acara kami.",
+    kutipan: content?.greeting || "Let's celebrate!",
     sumberKutipan: "",
     galeri: content?.gallery || [],
     rekening: content?.gifts?.map((g: any) => ({
@@ -240,6 +241,31 @@ function InvitationContent() {
       atasNama: g.accName
     })) || [],
     tema: content?.theme || "elegant",
+    coverImage: content?.coverImage,
+    audioMusik: content?.musicUrl
+  };
+
+  const eventData: CorporateEventData = {
+    penyelenggara: {
+      namaEvent: content?.eventDetail?.eventName || "Event Umum",
+      namaPenyelenggara: content?.eventDetail?.hostName || "Penyelenggara",
+      deskripsi: content?.eventDetail?.description || "",
+      logo: content?.eventDetail?.logo,
+    },
+    acara: {
+      nama: content?.events?.[0]?.type || "Detail Acara",
+      tanggal: content?.events?.[0]?.date || new Date().toISOString(),
+      waktuMulai: content?.events?.[0]?.startTime || "08:00",
+      waktuSelesai: content?.events?.[0]?.endTime || "12:00",
+      lokasi: content?.events?.[0]?.venue || "Lokasi",
+      alamatLengkap: content?.events?.[0]?.address || "Alamat",
+      linkGoogleMaps: content?.events?.[0]?.mapsUrl,
+    },
+    kutipan: content?.greeting || "Kami mengundang Anda untuk hadir.",
+    sumberKutipan: "",
+    galeri: content?.gallery || [],
+    tema: content?.theme || "elegant",
+    coverImage: content?.coverImage,
     audioMusik: content?.musicUrl
   };
 
@@ -255,19 +281,25 @@ function InvitationContent() {
          
          <div className="relative z-10 text-center px-6 max-w-md w-full">
            <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">
-             {isWedding ? "The Wedding Of" : "You Are Invited To"}
+             {eventType === "wedding" ? "The Wedding Of" : eventType === "birthday" ? "You're Invited to Birthday Party" : "Event Invitation"}
            </p>
            <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden">
              <img src={content?.coverImage || "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80"} alt="Cover" className="w-full h-full object-cover opacity-90" />
            </div>
            <h1 className="text-5xl font-serif font-bold text-amber-900 leading-none mb-3">
-             {isWedding 
+             {eventType === "wedding" 
                ? `${weddingData.pria.namaPanggilan} & ${weddingData.wanita.namaPanggilan}`
-               : `${generalEventData.host.namaPanggilan}'s Event`
+               : eventType === "birthday"
+               ? `${birthdayData.profil.namaPanggilan}'s ${birthdayData.profil.umur}th`
+               : eventData.penyelenggara.namaEvent
              }
            </h1>
            <p className="text-sm text-slate-600 font-medium uppercase tracking-widest bg-white/50 backdrop-blur-sm py-2 rounded-full w-max mx-auto px-6 border border-amber-100 mb-12">
-             {new Date(isWedding ? weddingData.acaraAkad.tanggal : generalEventData.acara.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
+             {new Date(
+               eventType === "wedding" ? weddingData.acaraAkad.tanggal : 
+               eventType === "birthday" ? birthdayData.acara.tanggal : 
+               eventData.acara.tanggal
+             ).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
            </p>
 
            <div className="p-4 bg-white/60 backdrop-blur-md rounded-2xl border border-white shadow-sm mb-8">
@@ -303,18 +335,19 @@ function InvitationContent() {
          )}
 
          <div className="relative z-0">
-            {isWedding ? (
+            {eventType === "wedding" && (
                <>
                  {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                  {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                  {selectedTheme === 'rustic' && <RusticWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                  {!['elegant', 'minimalist', 'rustic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                </>
-            ) : (
-               <>
-                 {/* For now, map all non-wedding events to ElegantEvent */}
-                 <ElegantEvent data={generalEventData} rsvp={rsvpProps} rsvpsList={rsvpsList} />
-               </>
+            )}
+            {eventType === "birthday" && (
+               <FunBirthday data={birthdayData} rsvp={rsvpProps} rsvpsList={rsvpsList} />
+            )}
+            {eventType === "event" && (
+               <ModernEvent data={eventData} rsvp={rsvpProps} rsvpsList={rsvpsList} />
             )}
          </div>
       </div>

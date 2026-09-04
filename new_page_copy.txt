@@ -9,7 +9,8 @@ import { WeddingData } from "@/types/invitation";
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
-import ElegantEvent from "@/components/templates/general/ElegantEvent";
+import FunBirthday from "@/components/templates/birthday/FunBirthday";
+import ModernEvent from "@/components/templates/general/ModernEvent";
 import imageCompression from 'browser-image-compression';
 
 export default function LiveEditorPage() {
@@ -23,6 +24,8 @@ export default function LiveEditorPage() {
   const [formData, setFormData] = useState({
     eventType: "wedding",
     host: { name: "Penyelenggara", description: "Acara Ulang Tahun", photo: "" },
+    birthday: { nickname: "", fullName: "", age: "", photo: "", dresscode: "" },
+    eventDetail: { eventName: "", hostName: "", description: "", logo: "" },
     title: "Pernikahan Romeo & Juliet",
     slug: "pernikahan-romeo-juliet",
     theme: "elegant",
@@ -152,6 +155,10 @@ export default function LiveEditorPage() {
         setFormData(prev => ({ ...prev, bride: { ...prev.bride, photo: publicUrl } }));
       } else if (pathName === 'host') {
         setFormData(prev => ({ ...prev, host: { ...prev.host, photo: publicUrl } }));
+      } else if (pathName === 'birthdayPhoto') {
+        setFormData(prev => ({ ...prev, birthday: { ...prev.birthday, photo: publicUrl } }));
+      } else if (pathName === 'eventLogo') {
+        setFormData(prev => ({ ...prev, eventDetail: { ...prev.eventDetail, logo: publicUrl } }));
       }
 
     } catch (err) {
@@ -293,12 +300,20 @@ export default function LiveEditorPage() {
       instagram: formData.bride.ig.replace("@", ""),
       foto: formData.bride.photo,
     },
-    // For General Events
-    host: {
-      namaLengkap: formData.host.name || "Nama Penyelenggara",
-      namaPanggilan: formData.host.name?.split(" ")[0] || "Penyelenggara",
-      deskripsi: formData.host.description || "Acara Spesial",
-      foto: formData.host.photo,
+    // For Birthday
+    profilUltah: {
+      namaLengkap: formData.birthday.fullName || "Nama Lengkap",
+      namaPanggilan: formData.birthday.nickname || "Panggilan",
+      umur: formData.birthday.age || "17",
+      foto: formData.birthday.photo,
+      dresscode: formData.birthday.dresscode,
+    },
+    // For Corporate Event
+    penyelenggara: {
+      namaEvent: formData.eventDetail.eventName || "Nama Event",
+      namaPenyelenggara: formData.eventDetail.hostName || "Nama Penyelenggara",
+      deskripsi: formData.eventDetail.description || "Deskripsi Singkat",
+      logo: formData.eventDetail.logo,
     },
     acaraAkad: {
       nama: formData.events[0]?.type || "Akad Nikah",
@@ -318,7 +333,7 @@ export default function LiveEditorPage() {
       alamatLengkap: formData.events[1]?.address || "Alamat",
       linkGoogleMaps: formData.events[1]?.mapsUrl,
     },
-    // For General Events (uses first event as main event)
+    // Single Event (Birthday/Corporate)
     acara: {
       nama: formData.events[0]?.type || "Acara Utama",
       tanggal: formData.events[0]?.date || new Date().toISOString(),
@@ -348,12 +363,19 @@ export default function LiveEditorPage() {
         { id: "hadiah", icon: Gift, label: "Angpao" },
         { id: "desain", icon: Palette, label: "Desain" },
       ]
-    : [
-        { id: "host", icon: Users, label: "Penyelenggara" },
+    : formData.eventType === "birthday"
+    ? [
+        { id: "profilUltah", icon: Heart, label: "Profil" },
         { id: "acara", icon: Calendar, label: "Acara" },
         { id: "galeri", icon: ImageIcon, label: "Galeri" },
         { id: "hadiah", icon: Gift, label: "Kado" },
         { id: "desain", icon: Palette, label: "Desain" },
+      ]
+    : [
+        { id: "penyelenggara", icon: Users, label: "Penyelenggara" },
+        { id: "acara", icon: Calendar, label: "Acara" },
+        { id: "galeri", icon: ImageIcon, label: "Galeri" },
+        { id: "desain", icon: Palette, label: "Desain" }, // Event has no Kado
       ];
 
   
@@ -362,16 +384,21 @@ export default function LiveEditorPage() {
       <div className="flex flex-col items-center justify-center h-[calc(100vh-120px)] bg-slate-50 -m-4 sm:-m-8">
         <h2 className="text-3xl font-bold text-slate-900 mb-2">Pilih Jenis Proyek</h2>
         <p className="text-slate-500 mb-10">Pilih kategori undangan yang ingin Anda buat.</p>
-        <div className="flex flex-col sm:flex-row gap-6">
+        <div className="flex flex-col md:flex-row flex-wrap justify-center gap-6">
           <button onClick={() => { setFormData({...formData, eventType: 'wedding', title: 'Pernikahan Baru'}); setActiveTab('mempelai'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
             <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">💍</div>
             <h3 className="text-xl font-bold text-slate-900 mb-2">Pernikahan</h3>
             <p className="text-sm text-slate-500">Undangan resepsi & akad nikah.</p>
           </button>
-          <button onClick={() => { setFormData({...formData, eventType: 'event', title: 'Event Baru', greeting: 'Kami mengundang Anda untuk hadir dalam acara kami.', events: [{ id: '1', type: 'Detail Acara', date: '', startTime: '', endTime: '', venue: '', address: '', mapsUrl: '' }]}); setActiveTab('host'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
+          <button onClick={() => { setFormData({...formData, eventType: 'birthday', title: 'Ulang Tahun Baru', greeting: 'Let\'s celebrate! Aku mengundang kalian untuk hadir di hari bahagiaku.', events: [{ id: '1', type: 'Detail Acara', date: '', startTime: '', endTime: '', venue: '', address: '', mapsUrl: '' }]}); setActiveTab('profilUltah'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
+            <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎂</div>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Ulang Tahun</h3>
+            <p className="text-sm text-slate-500">Sweet seventeen, kids party, dll.</p>
+          </button>
+          <button onClick={() => { setFormData({...formData, eventType: 'event', title: 'Event Baru', greeting: 'Kami mengundang Anda untuk hadir dalam acara kami.', events: [{ id: '1', type: 'Detail Acara', date: '', startTime: '', endTime: '', venue: '', address: '', mapsUrl: '' }]}); setActiveTab('penyelenggara'); setStep(2); }} className="w-64 p-8 bg-white border-2 border-indigo-100 hover:border-indigo-600 rounded-3xl text-center group transition-all hover:shadow-xl">
             <div className="text-5xl mb-4 group-hover:scale-110 transition-transform">🎫</div>
-            <h3 className="text-xl font-bold text-slate-900 mb-2">Event</h3>
-            <p className="text-sm text-slate-500">Ulang tahun, seminar, reuni, dll.</p>
+            <h3 className="text-xl font-bold text-slate-900 mb-2">Event Umum</h3>
+            <p className="text-sm text-slate-500">Seminar, gathering, reuni, dll.</p>
           </button>
         </div>
       </div>
@@ -447,7 +474,7 @@ export default function LiveEditorPage() {
           <div className="flex-1 overflow-y-auto p-6 space-y-8 custom-scrollbar">
             
             
-            {activeTab === "host" && (
+            {activeTab === "profilUltah" && (
               <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
                 <div className="space-y-4">
                   <h3 className="font-bold text-slate-900 border-b pb-2">Teks Pengantar</h3>
@@ -459,19 +486,63 @@ export default function LiveEditorPage() {
                   />
                 </div>
                 <div className="space-y-4 p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
-                  <h3 className="font-bold text-indigo-900 flex items-center gap-2">Penyelenggara Acara</h3>
+                  <h3 className="font-bold text-indigo-900 flex items-center gap-2">Profil Ultah</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Panggilan</label>
+                      <input type="text" value={formData.birthday.nickname} onChange={e => setFormData({...formData, birthday: {...formData.birthday, nickname: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                    </div>
+                    <div>
+                      <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Ultah Ke- (Umur)</label>
+                      <input type="number" value={formData.birthday.age} onChange={e => setFormData({...formData, birthday: {...formData.birthday, age: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: 17" />
+                    </div>
+                  </div>
                   <div>
-                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Penyelenggara / Host</label>
-                    <input type="text" value={formData.host.name} onChange={e => setFormData({...formData, host: {...formData.host, name: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Lengkap</label>
+                    <input type="text" value={formData.birthday.fullName} onChange={e => setFormData({...formData, birthday: {...formData.birthday, fullName: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Info Dresscode (Opsional)</label>
+                    <input type="text" value={formData.birthday.dresscode} onChange={e => setFormData({...formData, birthday: {...formData.birthday, dresscode: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: Baju warna putih" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Foto Profil Ultah</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'birthdayPhoto')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm" />
+                    {formData.birthday.photo && <p className="text-xs text-emerald-600 mt-2 font-bold">✓ Foto terupload</p>}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {activeTab === "penyelenggara" && (
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300">
+                <div className="space-y-4">
+                  <h3 className="font-bold text-slate-900 border-b pb-2">Teks Pengantar</h3>
+                  <textarea 
+                    value={formData.greeting} 
+                    onChange={(e) => setFormData({...formData, greeting: e.target.value})}
+                    rows={3} 
+                    className="w-full p-3 border border-slate-200 rounded-xl text-sm"
+                  />
+                </div>
+                <div className="space-y-4 p-5 bg-indigo-50/50 border border-indigo-100 rounded-2xl">
+                  <h3 className="font-bold text-indigo-900 flex items-center gap-2">Detail Penyelenggara Event</h3>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Judul / Nama Event</label>
+                    <input type="text" value={formData.eventDetail.eventName} onChange={e => setFormData({...formData, eventDetail: {...formData.eventDetail, eventName: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: Tech Summit 2026" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Penyelenggara</label>
+                    <input type="text" value={formData.eventDetail.hostName} onChange={e => setFormData({...formData, eventDetail: {...formData.eventDetail, hostName: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: Budi Corporate" />
                   </div>
                   <div>
                     <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Deskripsi Singkat</label>
-                    <input type="text" value={formData.host.description} onChange={e => setFormData({...formData, host: {...formData.host, description: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: Ulang Tahun ke-21" />
+                    <input type="text" value={formData.eventDetail.description} onChange={e => setFormData({...formData, eventDetail: {...formData.eventDetail, description: e.target.value}})} className="w-full p-2 border border-slate-200 rounded-lg text-sm" placeholder="Contoh: Konferensi Tahunan" />
                   </div>
                   <div>
-                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Foto Penyelenggara</label>
-                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'host')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm" />
-                    {formData.host.photo && <p className="text-xs text-emerald-600 mt-2 font-bold">✓ Foto terupload</p>}
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block flex items-center gap-2"><ImageIcon className="w-4 h-4" /> Logo / Banner</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'eventLogo')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm" />
+                    {formData.eventDetail.logo && <p className="text-xs text-emerald-600 mt-2 font-bold">✓ Logo terupload</p>}
                   </div>
                 </div>
               </div>
@@ -743,20 +814,20 @@ export default function LiveEditorPage() {
              
              {/* Layar Undangan */}
              <div className="w-full h-full bg-white rounded-[2rem] overflow-y-auto custom-scrollbar relative flex flex-col pointer-events-none origin-top">
-                {formData.eventType === 'wedding' ? (
-                   <div className="scale-[0.8] origin-top w-[125%] h-[125%] relative -left-[12.5%]">
-                     {formData.theme === 'elegant' && <ElegantWedding data={previewData} />}
-                     {formData.theme === 'minimalist' && <MinimalistWedding data={previewData} />}
-                     {formData.theme === 'rustic' && <RusticWedding data={previewData} />}
-                     {!['elegant', 'minimalist', 'rustic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
-                   </div>
-                ) : (
-                   <div className="p-8 text-center mt-20 text-slate-500 font-sans">
-                     <div className="text-4xl mb-4">🎉</div>
-                     <h3 className="font-bold text-lg mb-2">Acara Umum</h3>
-                     <p className="text-sm">Preview untuk template Acara Umum belum tersedia saat ini.</p>
-                   </div>
-                )}
+                <div className="scale-[0.8] origin-top w-[125%] h-[125%] relative -left-[12.5%]">
+                  {formData.eventType === "wedding" ? (
+                    <>
+                      {formData.theme === 'elegant' && <ElegantWedding data={previewData} />}
+                      {formData.theme === 'minimalist' && <MinimalistWedding data={previewData} />}
+                      {formData.theme === 'rustic' && <RusticWedding data={previewData} />}
+                      {!['elegant', 'minimalist', 'rustic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
+                    </>
+                  ) : formData.eventType === "birthday" ? (
+                    <FunBirthday data={previewData} />
+                  ) : (
+                    <ModernEvent data={previewData} />
+                  )}
+                </div>
              </div>
           </div>
 

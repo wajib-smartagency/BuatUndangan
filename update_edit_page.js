@@ -37,7 +37,9 @@ const fetch_code = `
             gallery: data.content.gallery || [],
             musicUrl: data.content.musicUrl || "",
             coverImage: data.content.coverImage || "",
-            slug: data.slug || ""
+            slug: data.slug || "",
+            birthday: data.content.birthday || { nickname: "", fullName: "", age: "", photo: "", dresscode: "" },
+            eventDetail: data.content.eventDetail || { eventName: "", hostName: "", description: "", logo: "" }
           });
           setStep(2); // Skip step 1
         }

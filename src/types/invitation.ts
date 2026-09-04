@@ -49,21 +49,39 @@ export interface WeddingData {
   coverImage?: string;
 }
 
-export interface Host {
+export interface ProfilUltah {
   namaLengkap: string;
   namaPanggilan: string;
-  deskripsi?: string; // e.g., "Ulang Tahun ke-21" or "CEO Perusahaan"
+  umur: string;
   foto?: string;
-  instagram?: string;
+  dresscode?: string;
 }
 
-export interface GeneralEventData {
-  host: Host;
+export interface BirthdayData {
+  profil: ProfilUltah;
   acara: Acara;
   kutipan?: string;
   sumberKutipan?: string;
   galeri?: string[];
   rekening?: Rekening[];
+  audioMusik?: string;
+  tema?: string;
+  coverImage?: string;
+}
+
+export interface PenyelenggaraEvent {
+  namaEvent: string;
+  namaPenyelenggara: string;
+  deskripsi?: string;
+  logo?: string;
+}
+
+export interface CorporateEventData {
+  penyelenggara: PenyelenggaraEvent;
+  acara: Acara;
+  kutipan?: string;
+  sumberKutipan?: string;
+  galeri?: string[];
   audioMusik?: string;
   tema?: string;
   coverImage?: string;
