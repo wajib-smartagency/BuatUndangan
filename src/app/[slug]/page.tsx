@@ -250,7 +250,7 @@ function InvitationContent() {
          
          {/* Hidden Audio Element */}
          {content?.musicUrl && (
-           <audio ref={audioRef} src={content.musicUrl} loop className="hidden" />
+           <audio ref={audioRef} src={content.musicUrl} loop playsInline preload="auto" className="hidden" />
          )}
 
          {/* Floating Music Button */}
