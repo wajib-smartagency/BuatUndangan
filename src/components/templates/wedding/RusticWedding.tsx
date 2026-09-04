@@ -1,11 +1,13 @@
 import React from 'react';
-import { WeddingData } from '@/types/invitation';
+import { WeddingData, RsvpProps } from '@/types/invitation';
 
 interface RusticWeddingProps {
   data: WeddingData;
+  rsvp?: RsvpProps;
+  rsvpsList?: any[];
 }
 
-export default function RusticWedding({ data }: RusticWeddingProps) {
+export default function RusticWedding({ data, rsvp, rsvpsList }: RusticWeddingProps) {
   return (
     <div className="min-h-screen bg-[#F4F1EA] text-[#5C4A3D] font-serif">
       {/* Hero Section */}

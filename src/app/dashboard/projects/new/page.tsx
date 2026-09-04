@@ -2,7 +2,7 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Users, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette, Music } from "lucide-react";
+import { ArrowLeft, Plus, Save, Users, Heart, Calendar, Palette, Upload, Trash2, Smartphone, Music, Gift, Image as ImageIcon, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { WeddingData } from "@/types/invitation";
@@ -65,6 +65,7 @@ export default function LiveEditorPage() {
     gifts: [
       { id: "1", bank: "BCA", accNumber: "1234567890", accName: "Romeo Montague" }
     ],
+    gallery: [] as string[],
     musicUrl: ""
   });
 
@@ -152,6 +153,44 @@ export default function LiveEditorPage() {
     } catch (err) {
       console.error(err);
       alert("Gagal mengupload gambar. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleGalleryUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    
+    setIsLoading(true);
+    const uploadedUrls: string[] = [];
+
+    try {
+      for (let i = 0; i < Math.min(files.length, 6); i++) {
+        const file = files[i];
+        if (file.size > 5 * 1024 * 1024) continue;
+
+        const options = {
+          maxSizeMB: 0.25,
+          maxWidthOrHeight: 1280,
+          useWebWorker: true
+        };
+        const compressedFile = await imageCompression(file, options);
+        
+        const ext = file.name.split('.').pop() || 'jpg';
+        const fileName = `gallery/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+        const { error } = await supabase.storage.from('invitations').upload(fileName, compressedFile);
+        if (error) throw error;
+
+        const { data: { publicUrl } } = supabase.storage.from('invitations').getPublicUrl(fileName);
+        uploadedUrls.push(publicUrl);
+      }
+
+      setFormData(prev => ({ ...prev, gallery: [...(prev.gallery || []), ...uploadedUrls].slice(0, 6) }));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengupload galeri. Coba lagi.");
     } finally {
       setIsLoading(false);
     }
@@ -264,11 +303,13 @@ export default function LiveEditorPage() {
       tanggal: formData.events[1]?.date || new Date().toISOString(),
       waktuMulai: formData.events[1]?.startTime || "11:00",
       waktuSelesai: formData.events[1]?.endTime || "13:00",
-      lokasi: formData.events[1]?.venue || "Lokasi",
-      alamatLengkap: formData.events[1]?.address || "Alamat",
+      lokasi: formData.events[1]?.venue || "Lokasi Resepsi",
+      alamatLengkap: formData.events[1]?.address || "Alamat Resepsi",
       linkGoogleMaps: formData.events[1]?.mapsUrl,
     },
-    kutipan: formData.greeting,
+    kutipan: formData.greeting || "Dengan memohon rahmat dan ridho Allah SWT...",
+    sumberKutipan: "",
+    galeri: formData.gallery || [],
     rekening: formData.gifts.map(g => ({
       namaBank: g.bank,
       noRekening: g.accNumber,
@@ -277,17 +318,21 @@ export default function LiveEditorPage() {
     tema: formData.theme
   };
 
-  const tabs = formData.eventType === 'wedding' ? [
-    { id: "mempelai", label: "Mempelai", icon: Heart },
-    { id: "acara", label: "Acara", icon: Calendar },
-    { id: "hadiah", label: "Hadiah", icon: Gift },
-    { id: "desain", label: "Desain", icon: Palette },
-  ] : [
-    { id: "host", label: "Penyelenggara", icon: Users },
-    { id: "acara", label: "Acara", icon: Calendar },
-    { id: "hadiah", label: "Hadiah", icon: Gift },
-    { id: "desain", label: "Desain", icon: Palette },
-  ];
+  const tabs = formData.eventType === "wedding" 
+    ? [
+        { id: "mempelai", icon: Heart, label: "Mempelai" },
+        { id: "acara", icon: Calendar, label: "Acara" },
+        { id: "galeri", icon: ImageIcon, label: "Galeri" },
+        { id: "hadiah", icon: Gift, label: "Angpao" },
+        { id: "desain", icon: Palette, label: "Desain" },
+      ]
+    : [
+        { id: "host", icon: Users, label: "Penyelenggara" },
+        { id: "acara", icon: Calendar, label: "Acara" },
+        { id: "galeri", icon: ImageIcon, label: "Galeri" },
+        { id: "hadiah", icon: Gift, label: "Angpao" },
+        { id: "desain", icon: Palette, label: "Desain" },
+      ];
 
   
   if (step === 1) {
@@ -506,6 +551,37 @@ export default function LiveEditorPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+            )}
+
+            {activeTab === "galeri" && (
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 py-6">
+                <div className="p-4 bg-indigo-50 border border-indigo-100 rounded-xl text-indigo-800 text-sm mb-4">
+                  Upload maksimal 6 foto untuk ditampilkan di undangan (Maks 5MB per foto).
+                </div>
+                
+                <div className="bg-white border-2 border-dashed border-slate-300 p-8 rounded-2xl text-center">
+                   <Upload className="w-8 h-8 text-slate-400 mx-auto mb-3" />
+                   <h3 className="font-bold text-slate-700 mb-1">Pilih Foto Galeri</h3>
+                   <p className="text-xs text-slate-500 mb-4">Mendukung format JPG, PNG.</p>
+                   <input type="file" accept="image/*" multiple onChange={handleGalleryUpload} className="w-full max-w-xs mx-auto block text-sm text-slate-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" />
+                </div>
+
+                {formData.gallery && formData.gallery.length > 0 && (
+                  <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mt-6">
+                    {formData.gallery.map((url, idx) => (
+                      <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-slate-200 group">
+                        <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover" />
+                        <button 
+                          onClick={() => setFormData(prev => ({...prev, gallery: prev.gallery.filter((_, i) => i !== idx)}))}
+                          className="absolute top-2 right-2 w-8 h-8 bg-white/90 text-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-sm"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 

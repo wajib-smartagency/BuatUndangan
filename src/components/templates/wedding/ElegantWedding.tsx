@@ -1,13 +1,52 @@
-import React from 'react';
+"use client";
+import React, { useState, useEffect } from 'react';
 import { WeddingData, RsvpProps } from '@/types/invitation';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Calendar, MapPin, Copy, MessageCircle } from 'lucide-react';
 
 interface ElegantWeddingProps {
   data: WeddingData;
   rsvp?: RsvpProps;
+  rsvpsList?: any[];
 }
 
-export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
+export default function ElegantWedding({ data, rsvp, rsvpsList = [] }: ElegantWeddingProps) {
+  const [timeLeft, setTimeLeft] = useState({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+  
+  useEffect(() => {
+    const eventDate = new Date(data.acaraAkad.tanggal).getTime();
+    
+    const timer = setInterval(() => {
+      const now = new Date().getTime();
+      const distance = eventDate - now;
+      
+      if (distance < 0) {
+        clearInterval(timer);
+        return;
+      }
+      
+      setTimeLeft({
+        days: Math.floor(distance / (1000 * 60 * 60 * 24)),
+        hours: Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)),
+        minutes: Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60)),
+        seconds: Math.floor((distance % (1000 * 60)) / 1000)
+      });
+    }, 1000);
+    
+    return () => clearInterval(timer);
+  }, [data.acaraAkad.tanggal]);
+
+  const copyToClipboard = (text: string) => {
+    navigator.clipboard.writeText(text);
+    alert('Nomor Rekening berhasil disalin!');
+  };
+
+  const getCalendarLink = () => {
+    const text = `Pernikahan ${data.pria.namaPanggilan} & ${data.wanita.namaPanggilan}`;
+    const dates = new Date(data.acaraAkad.tanggal).toISOString().replace(/-|:|\.\d\d\d/g,"");
+    const details = `Acara Akad: ${data.acaraAkad.waktuMulai}\nLokasi: ${data.acaraAkad.lokasi}`;
+    return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(text)}&dates=${dates}/${dates}&details=${encodeURIComponent(details)}&location=${encodeURIComponent(data.acaraAkad.lokasi)}`;
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#4A4A4A] font-serif">
       {/* Hero Section */}
@@ -26,7 +65,7 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
           <h1 className="text-6xl md:text-8xl text-[#2C3E2D] mb-4">
             {data.pria.namaPanggilan} <span className="text-[#B89B5E] text-5xl md:text-7xl">&</span> {data.wanita.namaPanggilan}
           </h1>
-          <p className="font-sans text-sm tracking-widest text-[#666] uppercase mt-8 border-y border-[#B89B5E] py-4 w-max mx-auto px-8">
+          <p className="font-sans text-sm tracking-widest text-[#666] uppercase mt-8 border-y border-[#B89B5E] py-4 w-max mx-auto px-8 mb-8">
             {new Date(data.acaraAkad.tanggal).toLocaleDateString('id-ID', {
               weekday: 'long',
               day: 'numeric',
@@ -34,6 +73,17 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
               year: 'numeric'
             })}
           </p>
+          
+          {/* Countdown */}
+          <div className="flex justify-center gap-4 text-[#2C3E2D] font-sans">
+            <div className="text-center"><div className="text-2xl font-bold">{timeLeft.days}</div><div className="text-[10px] uppercase tracking-wider">Hari</div></div>
+            <div className="text-xl">:</div>
+            <div className="text-center"><div className="text-2xl font-bold">{timeLeft.hours}</div><div className="text-[10px] uppercase tracking-wider">Jam</div></div>
+            <div className="text-xl">:</div>
+            <div className="text-center"><div className="text-2xl font-bold">{timeLeft.minutes}</div><div className="text-[10px] uppercase tracking-wider">Menit</div></div>
+            <div className="text-xl">:</div>
+            <div className="text-center"><div className="text-2xl font-bold">{timeLeft.seconds}</div><div className="text-[10px] uppercase tracking-wider">Detik</div></div>
+          </div>
         </div>
       </section>
 
@@ -91,7 +141,11 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
       <section className="py-24 px-4 bg-[#FDFBF7]">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-4xl text-[#2C3E2D] mb-4">Rangkaian Acara</h2>
-          <div className="w-16 h-[2px] bg-[#B89B5E] mx-auto mb-16"></div>
+          <div className="w-16 h-[2px] bg-[#B89B5E] mx-auto mb-12"></div>
+          
+          <a href={getCalendarLink()} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 bg-[#2C3E2D] text-[#FDFBF7] px-6 py-3 rounded-full text-sm font-sans tracking-widest uppercase hover:bg-[#1a261a] transition-colors mb-16">
+            <Calendar className="w-4 h-4" /> Save The Date
+          </a>
           
           <div className="grid md:grid-cols-2 gap-12">
             {/* Akad */}
@@ -141,20 +195,41 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
         </div>
       </section>
 
-      {/* Digital Envelope */}
+      {/* Gallery Section */}
+      {data.galeri && data.galeri.length > 0 && (
+        <section className="py-24 bg-white px-4 border-t border-[#F2EFE9]">
+          <div className="max-w-5xl mx-auto text-center">
+            <h2 className="text-3xl text-[#2C3E2D] mb-4">Galeri Kami</h2>
+            <div className="w-16 h-[2px] bg-[#B89B5E] mx-auto mb-16"></div>
+            
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {data.galeri.map((url, idx) => (
+                <div key={idx} className="aspect-square overflow-hidden bg-gray-100 group">
+                  <img src={url} alt={`Gallery ${idx}`} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700" />
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Gift Section */}
       {data.rekening && data.rekening.length > 0 && (
-        <section className="py-24 px-4 bg-white text-center border-t border-[#F2EFE9]">
+        <section className="py-24 px-4 bg-[#2C3E2D] text-[#E8E1D5] text-center">
           <div className="max-w-2xl mx-auto">
-            <h2 className="text-3xl text-[#2C3E2D] mb-4">Tanda Kasih</h2>
+            <h2 className="text-3xl mb-4">Kado Pernikahan</h2>
             <div className="w-16 h-[2px] bg-[#B89B5E] mx-auto mb-8"></div>
-            <p className="text-[#888] mb-12 leading-relaxed">Kehadiran dan doa restu Bapak/Ibu/Saudara/i merupakan kado terindah bagi kami. Namun, apabila Bapak/Ibu/Saudara/i hendak memberikan tanda kasih, dapat melalui fitur kado digital berikut:</p>
+            <p className="text-[#b2b5a5] mb-12 leading-relaxed">Kehadiran dan doa restu Anda merupakan kado terindah bagi kami. Namun, apabila Anda hendak memberikan tanda kasih, dapat melalui fitur kado digital berikut:</p>
             
             <div className="space-y-6">
               {data.rekening.map((rek, i) => (
-                <div key={i} className="bg-[#FDFBF7] p-8 rounded-sm border border-[#E8E1D5] inline-block w-full max-w-sm">
-                  <h3 className="font-bold text-xl text-[#2C3E2D] mb-3">{rek.namaBank}</h3>
-                  <p className="text-2xl tracking-wider mb-2 font-sans text-[#4A4A4A]">{rek.noRekening}</p>
-                  <p className="text-[#B89B5E] uppercase tracking-widest text-sm mt-4">A.N {rek.atasNama}</p>
+                <div key={i} className="bg-white/5 backdrop-blur-sm p-8 rounded-sm border border-white/10 inline-block w-full max-w-sm">
+                  <h3 className="font-bold text-xl text-white mb-3">{rek.namaBank}</h3>
+                  <p className="text-3xl tracking-wider mb-2 font-sans font-light">{rek.noRekening}</p>
+                  <p className="text-[#B89B5E] uppercase tracking-widest text-sm mt-4 mb-6">A.N {rek.atasNama}</p>
+                  <button onClick={() => copyToClipboard(rek.noRekening)} className="flex items-center justify-center gap-2 w-full border border-[#B89B5E] text-[#B89B5E] py-3 font-sans tracking-widest uppercase text-xs hover:bg-[#B89B5E] hover:text-white transition-colors">
+                    <Copy className="w-4 h-4" /> Salin Rekening
+                  </button>
                 </div>
               ))}
             </div>
@@ -163,7 +238,7 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
       )}
 
       {/* RSVP & Wishes */}
-      <section className="py-24 px-4 bg-[#FDFBF7] border-t border-[#F2EFE9]">
+      <section className="py-24 px-4 bg-[#FDFBF7]">
         <div className="max-w-xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-3xl text-[#2C3E2D] mb-4">Kehadiran & Ucapan</h2>
@@ -171,13 +246,13 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
           </div>
           
           {rsvp?.hasSubmitted ? (
-            <div className="bg-white p-12 text-center border border-[#F2EFE9]">
+            <div className="bg-white p-12 text-center border border-[#F2EFE9] mb-12">
                <CheckCircle2 className="w-16 h-16 text-[#B89B5E] mx-auto mb-4" />
                <h3 className="text-2xl text-[#2C3E2D] mb-2">Terima Kasih</h3>
                <p className="text-[#888]">Pesan dan konfirmasi kehadiran Anda telah kami terima.</p>
             </div>
           ) : (
-            <form className="space-y-8" onSubmit={rsvp?.onSubmit || ((e) => e.preventDefault())}>
+            <form className="space-y-8 mb-16 bg-white p-8 border border-[#F2EFE9]" onSubmit={rsvp?.onSubmit || ((e) => e.preventDefault())}>
               <div>
                 <label className="block font-sans text-sm tracking-widest uppercase text-[#888] mb-2">Nama Lengkap</label>
                 <input required type="text" value={rsvp?.name || ''} onChange={e => rsvp?.onNameChange(e.target.value)} className="w-full border-b border-[#B89B5E] py-3 bg-transparent focus:outline-none focus:border-[#2C3E2D] transition-colors font-sans" placeholder="Nama Anda" />
@@ -198,11 +273,34 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
               </button>
             </form>
           )}
+
+          {/* Guestbook List */}
+          {rsvpsList && rsvpsList.length > 0 && (
+            <div className="bg-white p-6 border border-[#F2EFE9] h-[500px] overflow-y-auto custom-scrollbar">
+               <h3 className="font-sans text-sm tracking-widest uppercase text-[#2C3E2D] mb-6 border-b border-[#F2EFE9] pb-4 flex items-center gap-2">
+                 <MessageCircle className="w-4 h-4" /> {rsvpsList.length} Pesan
+               </h3>
+               <div className="space-y-6">
+                 {rsvpsList.map((msg, idx) => (
+                   <div key={idx} className="border-b border-gray-100 pb-4 last:border-0">
+                     <div className="flex justify-between items-start mb-1">
+                       <h4 className="font-bold text-[#2C3E2D] font-sans">{msg.guests?.name || "Tamu"}</h4>
+                       <span className="text-[10px] text-gray-400 font-sans">{new Date(msg.created_at).toLocaleDateString('id-ID')}</span>
+                     </div>
+                     <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-sans uppercase mb-2 ${msg.status === 'hadir' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                       {msg.status === 'hadir' ? 'Hadir' : 'Tidak Hadir'}
+                     </span>
+                     <p className="text-gray-600 text-sm italic">"{msg.message}"</p>
+                   </div>
+                 ))}
+               </div>
+            </div>
+          )}
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="py-12 bg-[#2C3E2D] text-[#E8E1D5] text-center text-sm font-sans tracking-widest">
+      <footer className="py-12 bg-[#1a251b] text-[#E8E1D5] text-center text-sm font-sans tracking-widest">
         <p>BUATUNDANGAN DIGITAL</p>
       </footer>
     </div>

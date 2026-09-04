@@ -26,6 +26,7 @@ function InvitationContent() {
   // Project & Guest Data
   const [project, setProject] = useState<any>(null);
   const [guest, setGuest] = useState<any>(null);
+  const [rsvpsList, setRsvpsList] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -68,6 +69,18 @@ function InvitationContent() {
             setRsvpForm(prev => ({ ...prev, name: guestToken }));
           }
         }
+        
+        // Fetch RSVPs for Guestbook
+        const { data: rsvpsData } = await supabase
+          .from("rsvps")
+          .select("*, guests(name)")
+          .eq("project_id", projData.id)
+          .order("created_at", { ascending: false });
+          
+        if (rsvpsData) {
+          setRsvpsList(rsvpsData);
+        }
+        
       } catch (err) {
         console.error("Error fetching invitation:", err);
       } finally {
@@ -201,6 +214,7 @@ function InvitationContent() {
     },
     kutipan: content?.greeting || "Dengan memohon rahmat dan ridho Allah SWT...",
     sumberKutipan: "",
+    galeri: content?.gallery || [],
     rekening: content?.gifts?.map((g: any) => ({
       namaBank: g.bank,
       noRekening: g.accNumber,
@@ -263,10 +277,12 @@ function InvitationContent() {
            </button>
          )}
 
-         {/* RENDER SELECTED TEMPLATE */}
-         {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} />}
-         {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} />}
-         {selectedTheme === 'rustic' && <RusticWedding data={weddingData} />}
+         <div className="relative z-0">
+            {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+            {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+            {selectedTheme === 'rustic' && <RusticWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+            {!['elegant', 'minimalist', 'rustic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+         </div>
       </div>
     </div>
   );
@@ -279,4 +295,3 @@ export default function InvitationPage() {
     </Suspense>
   );
 }
-

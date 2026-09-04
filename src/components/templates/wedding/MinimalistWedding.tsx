@@ -1,11 +1,13 @@
 import React from 'react';
-import { WeddingData } from '@/types/invitation';
+import { WeddingData, RsvpProps } from '@/types/invitation';
 
 interface MinimalistWeddingProps {
   data: WeddingData;
+  rsvp?: RsvpProps;
+  rsvpsList?: any[];
 }
 
-export default function MinimalistWedding({ data }: MinimalistWeddingProps) {
+export default function MinimalistWedding({ data, rsvp, rsvpsList }: MinimalistWeddingProps) {
   return (
     <div className="min-h-screen bg-gray-50 text-gray-800 font-sans">
       {/* Hero Section */}
