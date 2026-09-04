@@ -9,6 +9,7 @@ import { WeddingData } from "@/types/invitation";
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
+import CinematicWedding from "@/components/templates/wedding/CinematicWedding";
 import FunBirthday from "@/components/templates/birthday/FunBirthday";
 import ModernEvent from "@/components/templates/general/ModernEvent";
 import imageCompression from 'browser-image-compression';
@@ -762,7 +763,7 @@ export default function LiveEditorPage() {
                  </div>
 
                  {formData.eventType === 'wedding' ? (
-                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                      {/* Elegant */}
                      <button 
                        onClick={() => setFormData({...formData, theme: 'elegant'})}
@@ -799,6 +800,17 @@ export default function LiveEditorPage() {
                        </div>
                        <h4 className="font-bold text-slate-900">Rustic</h4>
                      </button>
+                     {/* Cinematic */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'cinematic'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'cinematic' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-[#1d2e24] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-[#e6d6c6] font-serif text-lg">Cinematic</div>
+                          <div className="text-xs text-[#a9834f] mt-1 font-serif tracking-widest">SCROLL</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Cinematic</h4>
+                     </button>
                    </div>
                  ) : (
                    <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl text-center">
@@ -827,7 +839,8 @@ export default function LiveEditorPage() {
                       {formData.theme === 'elegant' && <ElegantWedding data={previewData} />}
                       {formData.theme === 'minimalist' && <MinimalistWedding data={previewData} />}
                       {formData.theme === 'rustic' && <RusticWedding data={previewData} />}
-                      {!['elegant', 'minimalist', 'rustic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
+                      {formData.theme === 'cinematic' && <CinematicWedding data={previewData} />}
+                      {!['elegant', 'minimalist', 'rustic', 'cinematic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
                     </>
                   ) : formData.eventType === "birthday" ? (
                     <FunBirthday data={previewData} />

@@ -8,6 +8,7 @@ import { WeddingData, BirthdayData, CorporateEventData, RsvpProps } from "@/type
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
+import CinematicWedding from "@/components/templates/wedding/CinematicWedding";
 import FunBirthday from "@/components/templates/birthday/FunBirthday";
 import ModernEvent from "@/components/templates/general/ModernEvent";
 
@@ -340,7 +341,8 @@ function InvitationContent() {
                  {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                  {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                  {selectedTheme === 'rustic' && <RusticWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
-                 {!['elegant', 'minimalist', 'rustic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+                 {selectedTheme === 'cinematic' && <CinematicWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+                 {!['elegant', 'minimalist', 'rustic', 'cinematic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
                </>
             )}
             {eventType === "birthday" && (
