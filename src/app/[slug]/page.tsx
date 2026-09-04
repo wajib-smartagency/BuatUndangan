@@ -4,10 +4,11 @@ import React, { useState, useEffect, Suspense, useRef } from "react";
 import { useParams, useSearchParams } from "next/navigation";
 import { Music, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
-import { WeddingData, RsvpProps } from "@/types/invitation";
+import { WeddingData, GeneralEventData, RsvpProps } from "@/types/invitation";
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
+import ElegantEvent from "@/components/templates/general/ElegantEvent";
 
 function InvitationContent() {
   const { slug } = useParams();
@@ -58,64 +59,46 @@ function InvitationContent() {
             .eq("project_id", projData.id)
             .or(`unique_token.eq.${guestToken},name.ilike.${guestToken}`)
             .limit(1)
-            .maybeSingle();
-            
+            .single();
+          
           if (guestData) {
             setGuest(guestData);
             setRsvpForm(prev => ({ ...prev, name: guestData.name }));
+
+            const { data: existingRsvp } = await supabase
+              .from('rsvps')
+              .select('*')
+              .eq('guest_id', guestData.id)
+              .single();
+            
+            if (existingRsvp) {
+              setHasSubmitted(true);
+            }
           } else {
-            // Jika tamu belum terdaftar di dashboard, tetap tampilkan nama dari URL
-            setGuest({ name: guestToken });
             setRsvpForm(prev => ({ ...prev, name: guestToken }));
           }
         }
-        
-        // Fetch RSVPs for Guestbook
+
         const { data: rsvpsData } = await supabase
           .from("rsvps")
           .select("*, guests(name)")
           .eq("project_id", projData.id)
           .order("created_at", { ascending: false });
-          
-        if (rsvpsData) {
-          setRsvpsList(rsvpsData);
-        }
-        
+
+        if (rsvpsData) setRsvpsList(rsvpsData);
+
       } catch (err) {
-        console.error("Error fetching invitation:", err);
+        console.error(err);
       } finally {
         setIsLoading(false);
       }
     };
-    if (slug) fetchData();
+    fetchData();
   }, [slug, guestToken]);
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex items-center justify-center">
-        <div className="w-8 h-8 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin"></div>
-      </div>
-    );
-  }
-
-  if (!project) {
-    return (
-      <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-4 text-center">
-        <h1 className="text-2xl font-bold text-slate-800 mb-2">Undangan Tidak Ditemukan</h1>
-        <p className="text-slate-500">Mohon periksa kembali link undangan yang Anda terima.</p>
-      </div>
-    );
-  }
-
-  const { content } = project;
-  const eventType = content?.eventType || project?.event_type || "wedding";
-  
   const handleOpen = () => {
     setIsOpened(true);
     setIsPlaying(true);
-    if (audioRef.current) {
-      audioRef.current.play().catch(e => console.log("Audio Blocked:", e));
-    }
   };
 
   const handleRsvpSubmit = async (e: React.FormEvent) => {
@@ -124,7 +107,6 @@ function InvitationContent() {
     try {
       let guestId = guest?.id;
       
-      // Jika tamu bukan dari link spesifik (tamu umum), buat guest record baru
       if (!guestId) {
         const uniqueToken = Math.random().toString(36).substring(2, 10);
         const { data: newGuest, error: guestError } = await supabase
@@ -138,7 +120,6 @@ function InvitationContent() {
         if (guestError) throw guestError;
         guestId = newGuest.id;
       } else {
-        // Update nama tamu jika diedit di form
         if (rsvpForm.name !== guest.name) {
            await supabase.from('guests').update({ name: rsvpForm.name }).eq('id', guestId);
         }
@@ -163,19 +144,29 @@ function InvitationContent() {
     }
   };
 
+  if (isLoading) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-amber-900 border-t-transparent rounded-full animate-spin"></div></div>;
+  }
+
+  if (!project) {
+    return <div className="min-h-screen flex items-center justify-center bg-slate-50 text-slate-500">Undangan tidak ditemukan.</div>;
+  }
+
   const rsvpProps: RsvpProps = {
     name: rsvpForm.name,
     status: rsvpForm.status,
     message: rsvpForm.message,
     isSubmitting,
     hasSubmitted,
-    onNameChange: (val) => setRsvpForm({...rsvpForm, name: val}),
-    onStatusChange: (val) => setRsvpForm({...rsvpForm, status: val}),
-    onMessageChange: (val) => setRsvpForm({...rsvpForm, message: val}),
-    onSubmit: handleRsvpSubmit
+    onNameChange: (val) => setRsvpForm({ ...rsvpForm, name: val }),
+    onStatusChange: (val) => setRsvpForm({ ...rsvpForm, status: val }),
+    onMessageChange: (val) => setRsvpForm({ ...rsvpForm, message: val }),
+    onSubmit: handleRsvpSubmit,
   };
 
-  // Adapter untuk mengubah JSON builder ke WeddingData
+  const content = project.content || {};
+  const isWedding = project.event_type === "wedding";
+
   const weddingData: WeddingData = {
     coverImage: content?.coverImage,
     pria: {
@@ -223,6 +214,35 @@ function InvitationContent() {
     tema: content?.theme || "elegant"
   };
 
+  const generalEventData: GeneralEventData = {
+    coverImage: content?.coverImage,
+    host: {
+      namaLengkap: content?.host?.name || "Nama Penyelenggara",
+      namaPanggilan: content?.host?.name?.split(" ")[0] || "Penyelenggara",
+      deskripsi: content?.host?.description || "Acara Spesial",
+      foto: content?.host?.photo,
+    },
+    acara: {
+      nama: content?.events?.[0]?.type || "Acara Utama",
+      tanggal: content?.events?.[0]?.date || new Date().toISOString(),
+      waktuMulai: content?.events?.[0]?.startTime || "08:00",
+      waktuSelesai: content?.events?.[0]?.endTime || "12:00",
+      lokasi: content?.events?.[0]?.venue || "Lokasi",
+      alamatLengkap: content?.events?.[0]?.address || "Alamat",
+      linkGoogleMaps: content?.events?.[0]?.mapsUrl,
+    },
+    kutipan: content?.greeting || "Selamat datang di acara kami.",
+    sumberKutipan: "",
+    galeri: content?.gallery || [],
+    rekening: content?.gifts?.map((g: any) => ({
+      namaBank: g.bank,
+      noRekening: g.accNumber,
+      atasNama: g.accName
+    })) || [],
+    tema: content?.theme || "elegant",
+    audioMusik: content?.musicUrl
+  };
+
   const selectedTheme = content?.theme || "elegant";
 
   return (
@@ -234,15 +254,20 @@ function InvitationContent() {
          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]"></div>
          
          <div className="relative z-10 text-center px-6 max-w-md w-full">
-           <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">The Wedding Of</p>
+           <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">
+             {isWedding ? "The Wedding Of" : "You Are Invited To"}
+           </p>
            <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden">
-             <img src={weddingData.coverImage || "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80"} alt="Cover" className="w-full h-full object-cover opacity-90" />
+             <img src={content?.coverImage || "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80"} alt="Cover" className="w-full h-full object-cover opacity-90" />
            </div>
            <h1 className="text-5xl font-serif font-bold text-amber-900 leading-none mb-3">
-             {weddingData.pria.namaPanggilan} & {weddingData.wanita.namaPanggilan}
+             {isWedding 
+               ? `${weddingData.pria.namaPanggilan} & ${weddingData.wanita.namaPanggilan}`
+               : `${generalEventData.host.namaPanggilan}'s Event`
+             }
            </h1>
            <p className="text-sm text-slate-600 font-medium uppercase tracking-widest bg-white/50 backdrop-blur-sm py-2 rounded-full w-max mx-auto px-6 border border-amber-100 mb-12">
-             {new Date(weddingData.acaraAkad.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
+             {new Date(isWedding ? weddingData.acaraAkad.tanggal : generalEventData.acara.tanggal).toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric'})}
            </p>
 
            <div className="p-4 bg-white/60 backdrop-blur-md rounded-2xl border border-white shadow-sm mb-8">
@@ -259,7 +284,7 @@ function InvitationContent() {
          </div>
       </div>
 
-      {/* Main Content (Only scrollable after opened) */}
+      {/* Main Content */}
       <div className={`mx-auto bg-white min-h-screen relative overflow-hidden ${!isOpened ? 'h-screen overflow-hidden' : ''}`}>
          
          {/* Hidden Audio Element */}
@@ -268,7 +293,7 @@ function InvitationContent() {
          )}
 
          {/* Floating Music Button */}
-         {isOpened && (
+         {isOpened && content?.musicUrl && (
            <button 
              onClick={() => setIsPlaying(!isPlaying)}
              className="fixed bottom-6 right-6 z-40 w-12 h-12 bg-slate-900 text-white rounded-full flex items-center justify-center shadow-lg hover:scale-110 transition-transform"
@@ -278,10 +303,19 @@ function InvitationContent() {
          )}
 
          <div className="relative z-0">
-            {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
-            {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
-            {selectedTheme === 'rustic' && <RusticWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
-            {!['elegant', 'minimalist', 'rustic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+            {isWedding ? (
+               <>
+                 {selectedTheme === 'elegant' && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+                 {selectedTheme === 'minimalist' && <MinimalistWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+                 {selectedTheme === 'rustic' && <RusticWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+                 {!['elegant', 'minimalist', 'rustic'].includes(selectedTheme) && <ElegantWedding data={weddingData} rsvp={rsvpProps} rsvpsList={rsvpsList} />}
+               </>
+            ) : (
+               <>
+                 {/* For now, map all non-wedding events to ElegantEvent */}
+                 <ElegantEvent data={generalEventData} rsvp={rsvpProps} rsvpsList={rsvpsList} />
+               </>
+            )}
          </div>
       </div>
     </div>
@@ -290,7 +324,7 @@ function InvitationContent() {
 
 export default function InvitationPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin"></div></div>}>
+    <Suspense fallback={<div className="min-h-screen flex items-center justify-center bg-slate-50"><div className="w-8 h-8 border-4 border-amber-900 border-t-transparent rounded-full animate-spin"></div></div>}>
       <InvitationContent />
     </Suspense>
   );

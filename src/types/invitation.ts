@@ -48,3 +48,23 @@ export interface WeddingData {
   tema?: string;
   coverImage?: string;
 }
+
+export interface Host {
+  namaLengkap: string;
+  namaPanggilan: string;
+  deskripsi?: string; // e.g., "Ulang Tahun ke-21" or "CEO Perusahaan"
+  foto?: string;
+  instagram?: string;
+}
+
+export interface GeneralEventData {
+  host: Host;
+  acara: Acara;
+  kutipan?: string;
+  sumberKutipan?: string;
+  galeri?: string[];
+  rekening?: Rekening[];
+  audioMusik?: string;
+  tema?: string;
+  coverImage?: string;
+}
