@@ -10,6 +10,8 @@ import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
 import CinematicWedding from "@/components/templates/wedding/CinematicWedding";
+import EditorialWedding from "@/components/templates/wedding/EditorialWedding";
+import TwilightWedding from "@/components/templates/wedding/TwilightWedding";
 import FunBirthday from "@/components/templates/birthday/FunBirthday";
 import ModernEvent from "@/components/templates/general/ModernEvent";
 import imageCompression from 'browser-image-compression';
@@ -803,7 +805,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathNam
                  </div>
 
                  {formData.eventType === 'wedding' ? (
-                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                   <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
                      {/* Elegant */}
                      <button 
                        onClick={() => setFormData({...formData, theme: 'elegant'})}
@@ -851,6 +853,29 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathNam
                        </div>
                        <h4 className="font-bold text-slate-900">Cinematic</h4>
                      </button>
+                     {/* Editorial */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'editorial'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'editorial' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-[#f2eee7] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-[#17140f] font-serif text-lg">Editorial</div>
+                          <div className="text-xs text-[#9c4b2e] mt-1 font-serif tracking-widest">MAGAZINE</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Editorial</h4>
+                     </button>
+                     
+                     {/* Twilight */}
+                     <button 
+                       onClick={() => setFormData({...formData, theme: 'twilight'})}
+                       className={`p-4 rounded-xl border-2 text-center transition-all ${formData.theme === 'twilight' ? 'border-indigo-600 bg-indigo-50' : 'border-slate-200 hover:border-indigo-300'}`}
+                     >
+                       <div className="w-full h-32 bg-[#221c39] border border-slate-200 rounded-lg mb-3 flex flex-col items-center justify-center p-2">
+                          <div className="text-[#faf3ee] font-serif text-lg italic">Twilight</div>
+                          <div className="text-xs text-[#c98fa0] mt-1 font-serif tracking-widest">PARALLAX</div>
+                       </div>
+                       <h4 className="font-bold text-slate-900">Twilight</h4>
+                     </button>
                    </div>
                  ) : (
                    <div className="bg-indigo-50 border border-indigo-100 p-5 rounded-2xl text-center">
@@ -880,7 +905,9 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathNam
                       {formData.theme === 'minimalist' && <MinimalistWedding data={previewData} />}
                       {formData.theme === 'rustic' && <RusticWedding data={previewData} />}
                       {formData.theme === 'cinematic' && <CinematicWedding data={previewData} />}
-                      {!['elegant', 'minimalist', 'rustic', 'cinematic'].includes(formData.theme) && <ElegantWedding data={previewData} />}
+                      {formData.theme === 'editorial' && <EditorialWedding data={previewData} />}
+                      {formData.theme === 'twilight' && <TwilightWedding data={previewData} />}
+                      {!['elegant', 'minimalist', 'rustic', 'cinematic', 'editorial', 'twilight'].includes(formData.theme) && <ElegantWedding data={previewData} />}
                     </>
                   ) : formData.eventType === "birthday" ? (
                     <FunBirthday data={previewData} />
