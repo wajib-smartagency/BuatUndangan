@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useParams } from "next/navigation";
+import React, { useState, useEffect, Suspense, useRef } from "react";
+import { useParams, useSearchParams } from "next/navigation";
 import { Music, CheckCircle2 } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { WeddingData, RsvpProps } from "@/types/invitation";
@@ -9,39 +9,68 @@ import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
 
-export default function InvitationPage() {
+function InvitationContent() {
   const { slug } = useParams();
+  const searchParams = useSearchParams();
+  const guestToken = searchParams.get("to");
+
   const [isOpened, setIsOpened] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
   
   // RSVP State
   const [rsvpForm, setRsvpForm] = useState({ name: "", status: "Hadir", message: "" });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasSubmitted, setHasSubmitted] = useState(false);
 
-  // Project Data
+  // Project & Guest Data
   const [project, setProject] = useState<any>(null);
+  const [guest, setGuest] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const fetchProject = async () => {
+    if (audioRef.current) {
+      if (isPlaying) {
+        audioRef.current.play().catch(e => console.log("Audio Autoplay Blocked:", e));
+      } else {
+        audioRef.current.pause();
+      }
+    }
+  }, [isPlaying]);
+
+  useEffect(() => {
+    const fetchData = async () => {
       try {
-        const { data, error } = await supabase
+        const { data: projData, error: projErr } = await supabase
           .from("projects")
           .select("*")
           .eq("slug", slug)
           .single();
         
-        if (error) throw error;
-        setProject(data);
+        if (projErr) throw projErr;
+        setProject(projData);
+
+        if (guestToken) {
+          const { data: guestData } = await supabase
+            .from("guests")
+            .select("*")
+            .eq("unique_token", guestToken)
+            .eq("project_id", projData.id)
+            .single();
+            
+          if (guestData) {
+            setGuest(guestData);
+            setRsvpForm(prev => ({ ...prev, name: guestData.name }));
+          }
+        }
       } catch (err) {
         console.error("Error fetching invitation:", err);
       } finally {
         setIsLoading(false);
       }
     };
-    if (slug) fetchProject();
-  }, [slug]);
+    if (slug) fetchData();
+  }, [slug, guestToken]);
 
   if (isLoading) {
     return (
@@ -72,21 +101,32 @@ export default function InvitationPage() {
     e.preventDefault();
     setIsSubmitting(true);
     try {
-      const uniqueToken = Math.random().toString(36).substring(2, 10);
-      const { data: guestData, error: guestError } = await supabase
-        .from('guests')
-        .insert([
-          { project_id: project.id, name: rsvpForm.name, unique_token: uniqueToken }
-        ])
-        .select()
-        .single();
-        
-      if (guestError) throw guestError;
+      let guestId = guest?.id;
+      
+      // Jika tamu bukan dari link spesifik (tamu umum), buat guest record baru
+      if (!guestId) {
+        const uniqueToken = Math.random().toString(36).substring(2, 10);
+        const { data: newGuest, error: guestError } = await supabase
+          .from('guests')
+          .insert([
+            { project_id: project.id, name: rsvpForm.name, unique_token: uniqueToken }
+          ])
+          .select()
+          .single();
+          
+        if (guestError) throw guestError;
+        guestId = newGuest.id;
+      } else {
+        // Update nama tamu jika diedit di form
+        if (rsvpForm.name !== guest.name) {
+           await supabase.from('guests').update({ name: rsvpForm.name }).eq('id', guestId);
+        }
+      }
 
       const { error: rsvpError } = await supabase.from('rsvps').insert([
         {
           project_id: project.id,
-          guest_id: guestData.id,
+          guest_id: guestId,
           status: rsvpForm.status,
           message: rsvpForm.message
         }
@@ -116,12 +156,14 @@ export default function InvitationPage() {
 
   // Adapter untuk mengubah JSON builder ke WeddingData
   const weddingData: WeddingData = {
+    coverImage: content?.coverImage,
     pria: {
       namaLengkap: content?.groom?.fullName || "Mempelai Pria",
       namaPanggilan: content?.groom?.nickname || "Pria",
       namaBapak: content?.groom?.parents?.split("&")[0]?.replace("Putra dari Bpk. ", "").trim() || "Bapak",
       namaIbu: content?.groom?.parents?.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
       instagram: content?.groom?.ig?.replace("@", "") || "",
+      foto: content?.groom?.photo,
     },
     wanita: {
       namaLengkap: content?.bride?.fullName || "Mempelai Wanita",
@@ -129,6 +171,7 @@ export default function InvitationPage() {
       namaBapak: content?.bride?.parents?.split("&")[0]?.replace("Putri dari Bpk. ", "").trim() || "Bapak",
       namaIbu: content?.bride?.parents?.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
       instagram: content?.bride?.ig?.replace("@", "") || "",
+      foto: content?.bride?.photo,
     },
     acaraAkad: {
       nama: content?.events?.[0]?.type || "Akad Nikah",
@@ -171,7 +214,7 @@ export default function InvitationPage() {
          <div className="relative z-10 text-center px-6 max-w-md w-full">
            <p className="text-xs tracking-widest text-slate-500 uppercase font-sans mb-8">The Wedding Of</p>
            <div className="w-40 h-40 mx-auto rounded-full bg-slate-200 mb-8 border-4 border-white shadow-xl overflow-hidden">
-             <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80" alt="Cover" className="w-full h-full object-cover opacity-90" />
+             <img src={weddingData.coverImage || "https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&q=80"} alt="Cover" className="w-full h-full object-cover opacity-90" />
            </div>
            <h1 className="text-5xl font-serif font-bold text-amber-900 leading-none mb-3">
              {weddingData.pria.namaPanggilan} & {weddingData.wanita.namaPanggilan}
@@ -182,7 +225,7 @@ export default function InvitationPage() {
 
            <div className="p-4 bg-white/60 backdrop-blur-md rounded-2xl border border-white shadow-sm mb-8">
              <p className="text-xs text-slate-500 mb-1">Kepada Yth.</p>
-             <p className="font-bold text-slate-800">Tamu Undangan</p>
+             <p className="font-bold text-slate-800">{guest?.name || "Tamu Undangan"}</p>
            </div>
 
            <button 
@@ -196,6 +239,12 @@ export default function InvitationPage() {
 
       {/* Main Content (Only scrollable after opened) */}
       <div className={`mx-auto bg-white min-h-screen relative overflow-hidden ${!isOpened ? 'h-screen overflow-hidden' : ''}`}>
+         
+         {/* Hidden Audio Element */}
+         {content?.musicUrl && (
+           <audio ref={audioRef} src={content.musicUrl} loop className="hidden" />
+         )}
+
          {/* Floating Music Button */}
          {isOpened && (
            <button 
@@ -212,6 +261,14 @@ export default function InvitationPage() {
          {selectedTheme === 'rustic' && <RusticWedding data={weddingData} />}
       </div>
     </div>
+  );
+}
+
+export default function InvitationPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 flex items-center justify-center"><div className="w-8 h-8 border-4 border-amber-200 border-t-amber-600 rounded-full animate-spin"></div></div>}>
+      <InvitationContent />
+    </Suspense>
   );
 }
 

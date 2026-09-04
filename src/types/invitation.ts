@@ -46,4 +46,5 @@ export interface WeddingData {
   rekening?: Rekening[];
   audioMusik?: string; // URL mp3
   tema?: string;
+  coverImage?: string;
 }

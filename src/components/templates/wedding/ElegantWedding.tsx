@@ -11,20 +11,30 @@ export default function ElegantWedding({ data, rsvp }: ElegantWeddingProps) {
   return (
     <div className="min-h-screen bg-[#FDFBF7] text-[#4A4A4A] font-serif">
       {/* Hero Section */}
-      <section className="min-h-screen flex flex-col items-center justify-center text-center px-4 relative overflow-hidden border-[16px] border-[#F2EFE9] m-4">
-        {/* Decorative corner borders could go here */}
-        <p className="text-sm tracking-[0.4em] uppercase mb-8 text-[#B89B5E]">Undangan Pernikahan</p>
-        <h1 className="text-6xl md:text-8xl text-[#2C3E2D] mb-6">
-          {data.pria.namaPanggilan} <br/><span className="text-4xl text-[#B89B5E] italic my-4 block">&</span> {data.wanita.namaPanggilan}
-        </h1>
-        <div className="w-24 h-[1px] bg-[#B89B5E] my-8 mx-auto"></div>
-        <p className="text-lg text-[#2C3E2D] tracking-[0.2em] uppercase">
-          {new Date(data.acaraAkad.tanggal).toLocaleDateString('id-ID', {
-            year: 'numeric',
-            month: 'long',
-            day: 'numeric'
-          })}
-        </p>
+      <section className="relative h-screen flex flex-col items-center justify-center overflow-hidden">
+        <div className="absolute inset-0">
+          <img 
+            src={data.coverImage || "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&q=80"} 
+            alt="Wedding Cover" 
+            className="w-full h-full object-cover opacity-60"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-[#FDFBF7]/40 via-transparent to-[#FDFBF7]"></div>
+        </div>
+        
+        <div className="relative z-10 text-center px-4">
+          <p className="font-sans text-sm tracking-[0.3em] uppercase text-[#888] mb-6">The Wedding Of</p>
+          <h1 className="text-6xl md:text-8xl text-[#2C3E2D] mb-4">
+            {data.pria.namaPanggilan} <span className="text-[#B89B5E] text-5xl md:text-7xl">&</span> {data.wanita.namaPanggilan}
+          </h1>
+          <p className="font-sans text-sm tracking-widest text-[#666] uppercase mt-8 border-y border-[#B89B5E] py-4 w-max mx-auto px-8">
+            {new Date(data.acaraAkad.tanggal).toLocaleDateString('id-ID', {
+              weekday: 'long',
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            })}
+          </p>
+        </div>
       </section>
 
       {/* Quote Section */}

@@ -2,13 +2,14 @@
 
 import React, { useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, Save, Users, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette } from "lucide-react";
+import { ArrowLeft, Save, Users, Sparkles, Smartphone, CheckCircle2, Heart, Calendar, Image as ImageIcon, Gift, Palette, Music } from "lucide-react";
 import { supabase } from "@/lib/supabase";
 import { useRouter } from "next/navigation";
 import { WeddingData } from "@/types/invitation";
 import ElegantWedding from "@/components/templates/wedding/ElegantWedding";
 import MinimalistWedding from "@/components/templates/wedding/MinimalistWedding";
 import RusticWedding from "@/components/templates/wedding/RusticWedding";
+import imageCompression from 'browser-image-compression';
 
 export default function LiveEditorPage() {
   const router = useRouter();
@@ -22,19 +23,22 @@ export default function LiveEditorPage() {
     eventType: "wedding",
     host: { name: "Budi & Friends", description: "Event Organizer", logo: "" },
     title: "Pernikahan Romeo & Juliet",
-    theme: "modern",
+    theme: "elegant",
+    coverImage: "",
     greeting: "Dengan memohon rahmat dan ridho Allah SWT, kami mengundang Bapak/Ibu/Saudara/i untuk menghadiri acara pernikahan kami.",
     groom: {
       nickname: "Romeo",
       fullName: "Romeo Montague",
       parents: "Putra dari Bpk. Montague & Ibu Montague",
-      ig: "@romeo"
+      ig: "@romeo",
+      photo: ""
     },
     bride: {
       nickname: "Juliet",
       fullName: "Juliet Capulet",
       parents: "Putri dari Bpk. Capulet & Ibu Capulet",
-      ig: "@juliet"
+      ig: "@juliet",
+      photo: ""
     },
     events: [
       {
@@ -60,8 +64,98 @@ export default function LiveEditorPage() {
     ],
     gifts: [
       { id: "1", bank: "BCA", accNumber: "1234567890", accName: "Romeo Montague" }
-    ]
+    ],
+    musicUrl: ""
   });
+
+  const handleAudioUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validasi 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("⚠️ File musik terlalu besar! Maksimal 5MB.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      const ext = file.name.split('.').pop() || 'mp3';
+      const fileName = `music/${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+
+      const { error } = await supabase.storage
+        .from('invitations')
+        .upload(fileName, file);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('invitations')
+        .getPublicUrl(fileName);
+
+      setFormData(prev => ({ ...prev, musicUrl: publicUrl }));
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengupload musik. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathName: string) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    
+    // Validasi 5MB
+    if (file.size > 5 * 1024 * 1024) {
+      alert("⚠️ Foto terlalu besar! Maksimal 5MB. Silakan pilih foto lain yang lebih kecil.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      
+      // Kompres file hingga maksimal 250KB dan dimensi lebar/tinggi maksimal 1200px
+      const options = {
+        maxSizeMB: 0.25,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+      };
+      
+      const compressedFile = await imageCompression(file, options);
+      
+      // Generate nama unik
+      const ext = file.name.split('.').pop() || 'jpg';
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 7)}.${ext}`;
+      const filePath = `uploads/${fileName}`;
+
+      const { error } = await supabase.storage
+        .from('invitations')
+        .upload(filePath, compressedFile);
+
+      if (error) throw error;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('invitations')
+        .getPublicUrl(filePath);
+
+      // Update state
+      if (pathName === 'coverImage') {
+        setFormData(prev => ({ ...prev, coverImage: publicUrl }));
+      } else if (pathName === 'groomPhoto') {
+        setFormData(prev => ({ ...prev, groom: { ...prev.groom, photo: publicUrl } }));
+      } else if (pathName === 'bridePhoto') {
+        setFormData(prev => ({ ...prev, bride: { ...prev.bride, photo: publicUrl } }));
+      }
+
+    } catch (err) {
+      console.error(err);
+      alert("Gagal mengupload gambar. Coba lagi.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleGroomChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData(prev => {
@@ -139,12 +233,14 @@ export default function LiveEditorPage() {
 
   // Adapter untuk preview
   const previewData: WeddingData = {
+    coverImage: formData.coverImage,
     pria: {
       namaLengkap: formData.groom.fullName || "Mempelai Pria",
       namaPanggilan: formData.groom.nickname || "Pria",
       namaBapak: formData.groom.parents.split("&")[0]?.replace("Putra dari Bpk. ", "").trim() || "Bapak",
       namaIbu: formData.groom.parents.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
       instagram: formData.groom.ig.replace("@", ""),
+      foto: formData.groom.photo,
     },
     wanita: {
       namaLengkap: formData.bride.fullName || "Mempelai Wanita",
@@ -152,6 +248,7 @@ export default function LiveEditorPage() {
       namaBapak: formData.bride.parents.split("&")[0]?.replace("Putri dari Bpk. ", "").trim() || "Bapak",
       namaIbu: formData.bride.parents.split("&")[1]?.replace("Ibu ", "").trim() || "Ibu",
       instagram: formData.bride.ig.replace("@", ""),
+      foto: formData.bride.photo,
     },
     acaraAkad: {
       nama: formData.events[0]?.type || "Akad Nikah",
@@ -331,6 +428,11 @@ export default function LiveEditorPage() {
                     <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Orang Tua</label>
                     <input type="text" name="parents" value={formData.groom.parents} onChange={handleGroomChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
                   </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Foto Mempelai Pria</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'groomPhoto')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm" />
+                    {formData.groom.photo && <p className="text-xs text-emerald-600 mt-1">✓ Foto sudah terupload</p>}
+                  </div>
                 </div>
 
                 <div className="space-y-4 p-5 bg-pink-50/50 border border-pink-100 rounded-2xl">
@@ -352,6 +454,11 @@ export default function LiveEditorPage() {
                   <div>
                     <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Nama Orang Tua</label>
                     <input type="text" name="parents" value={formData.bride.parents} onChange={handleBrideChange} className="w-full p-2 border border-slate-200 rounded-lg text-sm" />
+                  </div>
+                  <div>
+                    <label className="text-xs text-slate-500 font-bold uppercase mb-1 block">Foto Mempelai Wanita</label>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'bridePhoto')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm" />
+                    {formData.bride.photo && <p className="text-xs text-emerald-600 mt-1">✓ Foto sudah terupload</p>}
                   </div>
                 </div>
               </div>
@@ -437,13 +544,36 @@ export default function LiveEditorPage() {
             )}
 
             {activeTab === "desain" && (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300 py-6">
-                 <div className="text-center mb-8">
+              <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-300 py-6">
+                 <div className="text-center mb-6">
                    <Palette className="w-12 h-12 text-indigo-300 mx-auto mb-4" />
                    <h3 className="text-xl font-bold text-slate-900">Tema Visual</h3>
                    <p className="text-slate-500 text-sm">Pilih tema desain undangan untuk acara Anda.</p>
                  </div>
                  
+                 <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+                    <label className="text-sm font-bold text-slate-900 mb-2 block flex items-center gap-2">
+                       <ImageIcon className="w-4 h-4 text-indigo-600" /> Foto Background / Sampul Utama
+                    </label>
+                    <p className="text-xs text-slate-500 mb-3">Foto ini akan ditampilkan sebagai halaman depan undangan (Cover).</p>
+                    <input type="file" accept="image/*" onChange={(e) => handleImageUpload(e, 'coverImage')} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm mb-2" />
+                    {formData.coverImage && <p className="text-xs text-emerald-600 font-bold">✓ Foto background sudah terupload</p>}
+                 </div>
+
+                 <div className="bg-slate-50 border border-slate-200 p-5 rounded-2xl">
+                    <label className="text-sm font-bold text-slate-900 mb-2 block flex items-center gap-2">
+                       <Music className="w-4 h-4 text-indigo-600" /> Lagu Latar (Background Music)
+                    </label>
+                    <p className="text-xs text-slate-500 mb-3">Pilih lagu berformat MP3 (Maksimal 5MB). Musik akan otomatis berputar saat undangan dibuka.</p>
+                    <input type="file" accept="audio/*" onChange={handleAudioUpload} className="w-full p-2 border border-slate-200 bg-white rounded-lg text-sm mb-2" />
+                    {formData.musicUrl && (
+                      <div className="mt-3">
+                        <p className="text-xs text-emerald-600 font-bold mb-2">✓ Lagu siap diputar</p>
+                        <audio src={formData.musicUrl} controls className="w-full h-8" />
+                      </div>
+                    )}
+                 </div>
+
                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                    {/* Elegant */}
                    <button 
