@@ -176,7 +176,7 @@ export default function ModernEvent({ data, rsvp, rsvpsList = [] }: ModernEventP
       </section>
 
       {/* Gallery Section */}
-      {data.galeri && data.galeri?.length || 0 > 0 && (
+      {data.galeri && (data.galeri?.length || 0) > 0 && (
         <section className="py-24 px-4 bg-transparent relative z-10">
           <div className="max-w-5xl mx-auto">
             <div className="text-center mb-16">
