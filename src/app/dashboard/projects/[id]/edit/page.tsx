@@ -340,7 +340,7 @@ const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, pathNam
       foto: formData.bride.photo,
     },
     // For Birthday
-    profilUltah: {
+    profil: {
       namaLengkap: formData.birthday.fullName || "Nama Lengkap",
       namaPanggilan: formData.birthday.nickname || "Panggilan",
       umur: formData.birthday.age || "17",

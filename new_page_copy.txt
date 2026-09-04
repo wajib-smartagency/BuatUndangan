@@ -301,7 +301,7 @@ export default function LiveEditorPage() {
       foto: formData.bride.photo,
     },
     // For Birthday
-    profilUltah: {
+    profil: {
       namaLengkap: formData.birthday.fullName || "Nama Lengkap",
       namaPanggilan: formData.birthday.nickname || "Panggilan",
       umur: formData.birthday.age || "17",
